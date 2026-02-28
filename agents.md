@@ -1,5 +1,28 @@
 # Agentic Product Development Team — Agent Definitions & Orchestration
 
+> This file serves dual purpose: detailed agent definitions for Claude Code,
+> and universal agent instructions for all AI coding tools (AGENTS.md standard).
+
+---
+
+## Universal Instructions (for all AI tools)
+
+**Tech Stack, Commands, Conventions**: See `PROJECT.md`.
+
+**Code Style**: Single-responsibility functions, clear naming, no abbreviations.
+Follow import ordering and file naming from `PROJECT.md`.
+
+**Testing**: Factories/fixtures over hardcoded data. Mock externals. Every acceptance
+criterion needs a test. Follow patterns from `PROJECT.md`.
+
+**Security**: Never log secrets/PII, never commit `.env`, never disable security middleware.
+
+**Git**: `feat/`, `fix/`, `chore/` branches. Conventional commits. Squash merge to main.
+
+**Agent Pipeline**: PRD → Design Doc → Implementation → Tests → Review → Human Merge.
+
+---
+
 ## Architecture Overview
 
 This system uses Anthropic's **Orchestrator-Workers** pattern — the recommended approach
@@ -12,11 +35,11 @@ work, delegates to specialized worker agents, and synthesizes results.
                          │ (Orchestrator)│
                          └──────┬───────┘
                                 │
-           ┌────────┬───────┬───┴───┬────────┬──────────┐
-           │        │       │       │        │          │
-        ┌──▼──┐ ┌──▼──┐ ┌──▼──┐ ┌──▼──┐ ┌──▼───┐ ┌───▼──┐
-        │ PM  │ │Arch │ │ Dev │ │ QA  │ │ Sec  │ │ UX   │
-        └─────┘ └─────┘ └─────┘ └─────┘ └──────┘ └──────┘
+       ┌────────┬───────┬───────┼───────┬──────────┬──────────┐
+       │        │       │       │       │          │          │
+    ┌──▼──┐ ┌──▼──┐ ┌──▼──┐ ┌──▼──┐ ┌──▼───┐ ┌───▼──┐ ┌───▼────┐
+    │ PM  │ │Arch │ │Impl │ │Test │ │Review│ │Debug │ │ Docs   │
+    └─────┘ └─────┘ └─────┘ └─────┘ └──────┘ └──────┘ └────────┘
 ```
 
 ### Design Principles (from Anthropic's "Building Effective Agents")
@@ -64,26 +87,31 @@ synthesizes results, and manages quality gates.
 
 ### 2. Product Manager Agent
 
-**Purpose**: Translates business needs into structured product requirements.
+**File**: `.claude/agents/product-manager.md`
+**Model**: opus | **Mode**: acceptEdits
+
+**Purpose**: Translates business needs into structured, agent-executable PRDs.
 
 **Inputs**: User request, business context, existing product docs
 **Outputs**: PRD (written to `docs/prds/`), user stories, acceptance criteria
 
-**Responsibilities**:
-- Write PRDs following the template in `PRD-TEMPLATE.md`
-- Define user stories with clear acceptance criteria
-- Prioritize features using RICE or MoSCoW framework
-- Identify risks, dependencies, and out-of-scope items
-- Define success metrics and KPIs
+**Key Behaviors**:
+- Creates PRDs following `docs/templates/PRD-TEMPLATE.md`
+- All acceptance criteria use GIVEN/WHEN/THEN predicate format
+- Analyzes codebase before planning to reference real file paths
+- Each user story sized to fit in a single agent session
+- Includes explicit scope boundaries and agent permissions
+- Conducts market/technical research via WebSearch when needed
 
 **Prompt Template**:
 ```
 You are a Senior Product Manager. Given the following request, write a PRD
-following the template structure in PRD-TEMPLATE.md. Focus on:
+following the template structure in docs/templates/PRD-TEMPLATE.md. Focus on:
 - Clear problem statement with evidence
-- Specific user stories with acceptance criteria
+- Specific user stories with GIVEN/WHEN/THEN acceptance criteria
 - Measurable success metrics
 - Explicit scope boundaries (in-scope / out-of-scope)
+- File paths referencing actual codebase locations
 - Dependencies and risks
 
 Request: {request}
@@ -94,110 +122,156 @@ Context: {context}
 
 ### 3. Architect Agent
 
+**File**: `.claude/agents/architect.md`
+**Model**: opus | **Mode**: plan (read-only)
+
 **Purpose**: Makes technical decisions and designs system architecture.
 
 **Inputs**: Approved PRD, existing codebase context
-**Outputs**: Architecture Decision Record (ADR), system diagrams, tech stack decisions
+**Outputs**: Design document at `docs/architecture/[feature-name].md`
 
-**Responsibilities**:
-- Evaluate technical approaches and trade-offs
-- Write ADRs documenting decisions and rationale
-- Define API contracts and data models
-- Identify integration points and dependencies
-- Assess scalability, performance, and security implications
+**Key Behaviors**:
+- Evaluates technical approaches with pros/cons/trade-offs
+- Creates design docs with API contracts, data models, file change lists
+- Defines implementation phases matching `PROJECT.md` structure
+- Each phase independently testable with validation command
+- Checks existing patterns before proposing new ones
+- Never writes implementation code
 
-**Prompt Template**:
-```
-You are a Senior Software Architect. Given the PRD below, design the technical
-architecture. Write an ADR covering:
-- Context and problem
-- Decision drivers
-- Options considered (with pros/cons)
-- Chosen approach and rationale
-- Consequences and trade-offs
-- API contracts and data models
+**Design Document Structure**:
+```markdown
+# Technical Design: [Feature Name]
 
-PRD: {prd_content}
-Existing architecture: {codebase_context}
+## Context
+## Decision
+## Alternatives Considered
+## API Changes
+## Data Model Changes
+## File Changes (table with paths)
+## Implementation Order (phased)
+## Risks and Mitigations
 ```
 
 ---
 
-### 4. Developer Agent
+### 4. Implementer Agent (Developer)
+
+**File**: `.claude/agents/implementer.md`
+**Model**: inherit | **Mode**: acceptEdits
 
 **Purpose**: Implements features according to PRD and architecture decisions.
 
-**Inputs**: PRD, ADR, existing codebase
-**Outputs**: Working code, self-review notes
+**Inputs**: PRD, design doc, existing codebase
+**Outputs**: Working code, tests for new business logic
 
-**Responsibilities**:
-- Implement features following the architecture plan
-- Write clean, typed, well-structured code
-- Self-review before handoff to QA
-- Handle error cases defined in the PRD
-- Follow project code style conventions
-
-**Prompt Template**:
-```
-You are a Senior Developer. Implement the feature described in the PRD and ADR.
-Follow these rules:
-- Implement exactly what the PRD specifies — no over-engineering
-- Follow the architecture in the ADR
-- Use TypeScript strict mode
-- Write types for all public interfaces
-- Handle error cases from the acceptance criteria
-- Do not add features beyond the PRD scope
-
-PRD: {prd_content}
-ADR: {adr_content}
-```
+**Key Behaviors**:
+- Follows existing code patterns — no gratuitous new abstractions
+- Implements phase by phase from design doc
+- Writes tests for all new business logic
+- Runs validation command from `PROJECT.md` after every phase
+- Commits with conventional commit messages after each passing phase
+- Functions under 30 lines, descriptive naming, no abbreviations
 
 ---
 
-### 5. QA Engineer Agent
+### 5. Code Reviewer Agent
 
-**Purpose**: Designs and implements test strategies, writes tests, validates quality.
+**File**: `.claude/agents/code-reviewer.md`
+**Model**: inherit | **Mode**: plan (read-only)
+
+**Purpose**: Reviews code for quality, security, performance, and standards adherence.
+
+**Inputs**: Git diff of changes
+**Outputs**: Structured review with severity-classified findings
+
+**Review Checklist**:
+- **Correctness**: edge cases, error handling, race conditions
+- **Security**: secrets, injection, auth, input validation
+- **Quality**: naming, SRP, duplication, dead code, type safety
+- **Testing**: coverage, determinism, happy + error paths
+- **Performance**: N+1 queries, unnecessary recomputation, blocking ops
+
+**Output**: Findings classified as Critical / Warning / Suggestion / Positive Pattern,
+with verdict: APPROVE or REQUEST CHANGES.
+
+---
+
+### 6. Tester Agent (QA Engineer)
+
+**File**: `.claude/agents/tester.md`
+**Model**: sonnet | **Mode**: acceptEdits
+
+**Purpose**: Validates acceptance criteria and writes missing tests.
 
 **Inputs**: PRD (acceptance criteria), implementation code
-**Outputs**: Test plan, test files, coverage report, bug reports
+**Outputs**: Test files, coverage report, validation report
 
-**Responsibilities**:
-- Create test plan based on PRD acceptance criteria
-- Write unit tests for all public functions
-- Write integration tests for API endpoints and workflows
-- Verify edge cases and error handling
-- Report bugs with reproduction steps
-
-**Prompt Template**:
-```
-You are a Senior QA Engineer. Given the PRD and implementation, create a
-comprehensive test plan and write tests:
-- Map each acceptance criterion to at least one test
-- Cover happy path, error cases, and edge cases
-- Write unit tests for isolated logic
-- Write integration tests for workflows
-- Report any gaps between PRD and implementation
-
-PRD: {prd_content}
-Implementation files: {file_list}
-```
+**Key Behaviors**:
+- Maps every GIVEN/WHEN/THEN criterion to at least one test
+- Uses Arrange/Act/Assert pattern
+- Covers edge cases: null, empty, boundary, concurrent, auth
+- Uses factories and fixtures, never hardcoded data
+- Mocks external services, never calls real APIs
+- Reports coverage with acceptance criteria mapping table
 
 ---
 
-### 6. Security Reviewer Agent
+### 7. Debugger Agent
+
+**File**: `.claude/agents/debugger.md`
+**Model**: inherit | **Mode**: plan (read-only)
+
+**Purpose**: Investigates bugs and performs root cause analysis.
+
+**Inputs**: Bug description or GitHub issue ID
+**Outputs**: RCA document with proposed fix
+
+**Investigation Methodology**:
+1. **Reproduce** — confirm the issue exists
+2. **Locate** — find error origin in codebase
+3. **Trace** — follow call chain backward to root
+4. **Hypothesize** — form theory about cause
+5. **Verify** — test theory against code evidence
+6. **Document** — write up with file:line references
+
+**Does NOT implement fixes** — diagnoses and proposes only.
+Outputs include confidence level, regression risk, and similar patterns elsewhere.
+
+---
+
+### 8. Documentation Agent
+
+**File**: `.claude/agents/docs-writer.md`
+**Model**: sonnet | **Mode**: acceptEdits
+
+**Purpose**: Creates and maintains developer-facing documentation.
+
+**Outputs**: API docs, architecture guides, changelogs, README updates
+
+**Key Behaviors**:
+- Writes for developers new to the project
+- Includes runnable code examples
+- Uses Mermaid diagrams for visual architecture
+- Follows Keep a Changelog format
+- Updates existing docs rather than creating duplicates
+
+---
+
+### 9. Security Reviewer Agent
 
 **Purpose**: Identifies security vulnerabilities and ensures compliance.
 
 **Inputs**: Implementation code, architecture docs
 **Outputs**: Security audit report, remediation recommendations
 
-**Responsibilities**:
-- Review code for OWASP Top 10 vulnerabilities
-- Check for hardcoded secrets or credentials
-- Validate input sanitization and output encoding
-- Review authentication and authorization logic
-- Check dependency vulnerabilities
-- Verify secure communication (TLS, CORS, CSP)
+**Review Scope**:
+- OWASP Top 10 vulnerability scan
+- Hardcoded secrets and credentials
+- Input sanitization on all external boundaries
+- Authentication and authorization bypass vectors
+- Injection risks (SQL, XSS, command injection)
+- Dependency vulnerability check (known CVEs)
+- Secure communication (TLS, CORS, CSP)
 
 **Prompt Template**:
 ```
@@ -210,24 +284,25 @@ You are a Senior Security Engineer. Audit the implementation for security issues
 - Review dependency security (known CVEs)
 
 Implementation files: {file_list}
-Architecture: {adr_content}
+Architecture: {design_doc_content}
 ```
 
 ---
 
-### 7. UX Reviewer Agent
+### 10. UX Reviewer Agent
 
 **Purpose**: Evaluates user experience, accessibility, and design consistency.
 
 **Inputs**: UI components, design system docs
 **Outputs**: UX review report, accessibility findings
 
-**Responsibilities**:
-- Review UI components for consistency with design system
-- Check WCAG 2.1 AA compliance
-- Validate responsive behavior
-- Review error states and loading states
-- Check keyboard navigation and screen reader compatibility
+**Review Scope**:
+- Design system consistency (spacing, colors, typography)
+- WCAG 2.1 AA accessibility compliance
+- Keyboard navigation support
+- Screen reader compatibility (ARIA labels, semantic HTML)
+- Responsive behavior across breakpoints
+- Error states, empty states, loading states
 
 **Prompt Template**:
 ```
@@ -252,7 +327,7 @@ Design System: {design_system_docs}
 For well-defined features with clear dependencies:
 
 ```
-PM Agent → Architect Agent → Developer Agent → QA Agent → Security Agent → UX Agent
+PM Agent → Architect Agent → Implementer Agent → Tester Agent → Code Review → Security → UX
 ```
 
 Each agent's output feeds the next. Quality gates between each step.
@@ -271,9 +346,9 @@ For features with independent frontend/backend/data work:
               │          │          │
               └──────────┼──────────┘
                          │
-                    QA Agent (integration)
+                    Tester Agent (integration)
                          │
-                  Security Agent
+                  Code Reviewer Agent
 ```
 
 ### Pattern 3: Evaluator-Optimizer Loop
@@ -281,10 +356,10 @@ For features with independent frontend/backend/data work:
 For quality-critical features requiring iteration:
 
 ```
-Developer Agent ──→ QA Agent ──→ Developer Agent (fixes) ──→ QA Agent (re-test)
-                                       ↑                          │
-                                       └──────────────────────────┘
-                                         (loop until tests pass)
+Implementer Agent → Tester Agent → Implementer Agent (fixes) → Tester Agent (re-test)
+                                         ↑                          │
+                                         └──────────────────────────┘
+                                           (loop until tests pass)
 ```
 
 ### Pattern 4: Research Spike
@@ -299,6 +374,16 @@ Lead Agent spawns 3 Research Subagents in parallel
 Lead Agent synthesizes findings → Architect Agent decides
 ```
 
+### Pattern 5: Plan/Execute Loop
+
+For complex features requiring upfront analysis:
+
+```
+/plan → human reviews → /execute → /validation:execution-report → /validation:system-review
+```
+
+Iterative: system-review feeds improvements back into CLAUDE.md and agent definitions.
+
 ---
 
 ## Communication Protocol
@@ -307,7 +392,7 @@ Lead Agent synthesizes findings → Architect Agent decides
 
 Agents do **not** talk to each other directly. All communication flows through:
 
-1. **File artifacts** — PRDs, ADRs, test plans, audit reports saved to `docs/`
+1. **File artifacts** — PRDs, design docs, test plans, audit reports saved to `docs/`
 2. **Task list** — shared task tracking via TaskCreate/TaskUpdate
 3. **Orchestrator summaries** — Lead Agent passes relevant context when spawning workers
 
@@ -329,8 +414,7 @@ Each agent outputs a structured handoff:
 - [decision 2]
 
 ### Open Questions / Risks
-- [question 1]
-- [risk 1]
+- [question or risk]
 
 ### Next Steps
 - [what the next agent should focus on]
@@ -352,8 +436,10 @@ Each agent outputs a structured handoff:
 
 ### Long-Term (Project Knowledge)
 - `CLAUDE.md` stores stable project conventions and architecture overview
-- `docs/adrs/` stores all architecture decisions with rationale
+- `PROJECT.md` stores tech stack, commands, and project-specific config
+- `docs/architecture/` stores all technical design documents
 - `docs/prds/` stores all product requirements
+- `docs/rca/` stores root cause analyses for bugs
 - Git history provides full change context
 
 ---
@@ -363,10 +449,69 @@ Each agent outputs a structured handoff:
 | Checkpoint           | When                         | What Requires Approval              |
 |----------------------|------------------------------|-------------------------------------|
 | PRD Review           | After PM Agent drafts PRD    | Requirements, scope, priorities     |
-| Architecture Review  | After Architect writes ADR   | Tech decisions, trade-offs          |
+| Architecture Review  | After Architect writes design| Tech decisions, trade-offs          |
 | Implementation Review| After Developer completes    | Code quality, approach correctness  |
 | Security Sign-off    | After Security audit         | Any HIGH/CRITICAL findings          |
 | Release Approval     | After all gates pass         | Final go/no-go for deployment       |
+
+### When Humans Must Intervene
+
+- Requirements are ambiguous or acceptance criteria are missing
+- Architectural decisions affect multiple services
+- New external dependencies are being introduced
+- Tests fail with unclear root cause
+- Security-sensitive changes (auth, crypto, payments)
+- High blast-radius changes (shared interfaces, database schemas)
+
+---
+
+## Quality Verification Lattice
+
+Five-layer verification ensures nothing slips through:
+
+```
+Layer 1: DETERMINISTIC   — build, unit tests, lint, typecheck
+Layer 2: SEMANTIC         — contract tests, golden tests, snapshots
+Layer 3: SECURITY         — SAST, dependency scan, secret scan
+Layer 4: AGENTIC          — code-reviewer agent for style + spec adherence
+Layer 5: HUMAN            — escalations and final acceptance
+```
+
+---
+
+## Agent Teams (Experimental)
+
+Enable in `.claude/settings.json`:
+```json
+{"env": {"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"}}
+```
+
+Agent teams allow multiple Claude Code instances to work in parallel:
+- **Team Lead**: coordinates work, spawns teammates
+- **Teammates**: independent context windows, claim tasks from shared list
+- **Task List**: shared with pending/in_progress/completed states and dependencies
+- **Mailbox**: direct inter-agent messaging
+
+Best for: parallel implementation of independent modules, concurrent research,
+competing approaches to the same problem.
+
+---
+
+## Quick Commands Reference
+
+| Need | Command |
+|------|---------|
+| Full feature pipeline | `/new-feature [description]` |
+| Fix a bug | `/fix-bug [description or #issue]` |
+| Review current changes | `/review-code` |
+| Plan implementation | `/plan [feature]` |
+| Execute a plan | `/execute [plan-path]` |
+| Load project context | `/prime` |
+| Atomic commit | `/commit` |
+| Health check | `/validation:validate` |
+| Post-implementation report | `/validation:execution-report [plan]` |
+| Process improvement analysis | `/validation:system-review [plan] [report]` |
+| GitHub issue RCA | `/github-issue:rca [issue-id]` |
 
 ---
 
@@ -380,22 +525,25 @@ Lead Agent:
   2. Spawns PM Agent to write PRD
   3. User reviews/approves PRD
   4. Spawns Architect Agent with approved PRD
-  5. User reviews/approves ADR
-  6. Spawns Developer Agent with PRD + ADR
-  7. Spawns QA Agent to test implementation
-  8. Spawns Security Agent for audit
-  9. Spawns UX Agent for UI review
-  10. Synthesizes all results → presents to user
+  5. User reviews/approves design doc
+  6. Spawns Implementer Agent with PRD + design doc
+  7. Spawns Tester Agent to test implementation
+  8. Spawns Code Reviewer Agent for review
+  9. Spawns Security Agent for audit (if applicable)
+  10. Spawns UX Agent for UI review (if applicable)
+  11. Synthesizes all results → presents to user
 ```
 
 ### 2. Bug Fix
 ```
-User → Lead Agent: "Bug: [description]"
+User → Lead Agent: "Bug: [description]" or "Fix #42"
 Lead Agent:
-  1. Spawns Developer Agent to investigate and fix
-  2. Spawns QA Agent to write regression test
-  3. Spawns Security Agent if security-related
-  4. Presents fix and tests to user
+  1. Spawns Debugger Agent to investigate root cause
+  2. User reviews/approves proposed fix
+  3. Spawns Implementer Agent to apply fix
+  4. Spawns Tester Agent to write regression test
+  5. Spawns Code Reviewer Agent for review
+  6. Presents fix and tests to user
 ```
 
 ### 3. Technical Debt / Refactor
@@ -404,8 +552,8 @@ User → Lead Agent: "Refactor [component]"
 Lead Agent:
   1. Spawns Architect Agent to plan refactor approach
   2. User reviews/approves plan
-  3. Spawns Developer Agent to implement
-  4. Spawns QA Agent to verify no regressions
+  3. Spawns Implementer Agent to implement
+  4. Spawns Tester Agent to verify no regressions
   5. Presents results to user
 ```
 
@@ -416,6 +564,9 @@ Lead Agent:
 - [Anthropic: Building Effective Agents](https://www.anthropic.com/research/building-effective-agents)
 - [Anthropic: How We Built Our Multi-Agent Research System](https://www.anthropic.com/engineering/multi-agent-research-system)
 - [Anthropic: Building Agents with the Claude Agent SDK](https://www.anthropic.com/engineering/building-agents-with-the-claude-agent-sdk)
+- [Claude Code Sub-Agents](https://code.claude.com/docs/en/sub-agents)
+- [Claude Code Agent Teams](https://code.claude.com/docs/en/agent-teams)
 - [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices)
+- [Using CLAUDE.md Files](https://claude.com/blog/using-claude-md-files)
+- [AGENTS.md Specification](https://agents.md/)
 - [Addy Osmani: How to Write a Good Spec for AI Agents](https://addyosmani.com/blog/good-spec/)
-- [Trail of Bits: Claude Code Config](https://github.com/trailofbits/claude-code-config)
