@@ -1,5 +1,6 @@
 ---
-description: Full project health check -- lint, types, tests, build, code quality
+name: validate
+description: "Full project health check: lint, types, tests, build, code quality. Use before commits, before PRs, or when the user asks to validate the project."
 ---
 
 # Project Validation
@@ -13,7 +14,7 @@ Run the lint command from `PROJECT.md`.
 
 ## 2. Type Checking
 
-Run the type check command from `PROJECT.md` (skip if N/A).
+Run the type check command from `PROJECT.md`.
 **Expected**: No type errors.
 
 ## 3. Tests
@@ -32,7 +33,7 @@ Run the build command from `PROJECT.md`.
 ## 5. Code Quality
 
 Check for:
-- **Hardcoded secrets**: API keys, tokens, passwords in source
+- **Hardcoded secrets**: API keys, bot tokens, passwords in source
 - **Type safety violations**: any `any` types or unsafe casts
 - **Dead code**: unused imports, commented-out blocks, unreachable code
 - **Swallowed errors**: empty catch blocks or ignored error handlers

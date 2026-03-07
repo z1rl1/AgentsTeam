@@ -1,5 +1,6 @@
 ---
-description: Create a detailed implementation plan with codebase analysis
+name: plan
+description: "Create a detailed implementation plan with codebase analysis. Use when the user wants to plan a feature before building it, or says 'plan this'."
 ---
 
 # Plan: $ARGUMENTS

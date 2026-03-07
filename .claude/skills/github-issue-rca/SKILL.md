@@ -1,5 +1,6 @@
 ---
-description: Investigate a GitHub issue and create RCA document
+name: github-issue-rca
+description: "Investigate a GitHub issue and create RCA document. Use when the user mentions a GitHub issue number for root cause analysis."
 ---
 
 # Root Cause Analysis: Issue #$ARGUMENTS
@@ -39,7 +40,7 @@ Determine:
 Save RCA to `docs/rca/issue-$ARGUMENTS.md`:
 
 ```markdown
-# RCA: Issue #[number] -- [title]
+# RCA: Issue #[number] — [title]
 
 **Severity**: [Critical/High/Medium/Low]
 **Date**: [today]
@@ -74,4 +75,3 @@ Save RCA to `docs/rca/issue-$ARGUMENTS.md`:
 ## Next Steps
 
 Suggest using the `/fix-bug` command to implement the fix.
-Recommend `Fixes #$ARGUMENTS` in the commit message.

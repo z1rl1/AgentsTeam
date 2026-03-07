@@ -1,5 +1,6 @@
 ---
-description: Meta-analysis -- plan vs execution, process improvements
+name: system-review
+description: "Meta-analysis: plan vs execution, process improvements. Use after an execution report to find process bugs and improve agent workflows."
 ---
 
 # System Review
@@ -56,10 +57,7 @@ For each problematic divergence: was the plan unclear? Was context missing? Was 
 **CLAUDE.md updates:**
 - [ ] [what to add or change]
 
-**Agent definition updates:**
-- [ ] [what to clarify]
-
-**Command template updates:**
+**Skill updates:**
 - [ ] [what to improve]
 
 ### Key Learnings

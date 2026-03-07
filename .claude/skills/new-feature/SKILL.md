@@ -1,5 +1,6 @@
 ---
-description: Full feature workflow -- from idea to review-ready code
+name: new-feature
+description: "Full feature workflow from idea to review-ready code. Use when the user wants to build a new feature, add functionality, or says 'new feature'."
 ---
 
 # New Feature: $ARGUMENTS
@@ -21,7 +22,7 @@ Present a summary of the PRD including:
 - Key acceptance criteria
 - Scope boundaries
 
-Wait for my approval before proceeding. I may request revisions.
+Wait for approval before proceeding. Revisions may be requested.
 
 ## Step 3: Technical Design
 
@@ -36,7 +37,7 @@ Present design summary including:
 - Implementation phases
 - Identified risks
 
-Wait for my approval before proceeding.
+Wait for approval before proceeding.
 
 ## Step 5: Implement
 
@@ -62,4 +63,4 @@ Present the final implementation overview:
 - Review findings and their status
 - Any outstanding items
 
-Ask if I want to create a PR.
+Ask if a PR should be created.

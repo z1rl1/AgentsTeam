@@ -1,5 +1,6 @@
 ---
-description: Bug fix workflow -- investigate, fix, test, review
+name: fix-bug
+description: "Bug fix workflow: investigate, fix, test, review. Use when the user reports a bug, mentions an error, or references a GitHub issue to fix."
 ---
 
 # Fix Bug: $ARGUMENTS
@@ -23,7 +24,7 @@ Present the investigation results:
 - Confidence level
 - Regression risk assessment
 
-Wait for my approval before proceeding.
+Wait for approval before proceeding.
 
 ## Step 3: Apply Fix
 
@@ -44,6 +45,6 @@ Use the **code-reviewer** agent to review the fix.
 
 ## Step 6: Summary
 
-Present results and ask if I want to create a PR.
+Present results and ask if a PR should be created.
 
 If this was a GitHub issue, suggest using `Fixes #$ARGUMENTS` in the commit message.

@@ -1,5 +1,6 @@
 ---
-description: Stage and create an atomic commit with conventional prefix
+name: commit
+description: "Stage and create an atomic commit with conventional prefix. Use when the user says 'commit', 'save changes', or asks to commit current work."
 ---
 
 # Commit Current Changes

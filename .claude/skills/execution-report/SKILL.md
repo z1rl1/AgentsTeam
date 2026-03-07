@@ -1,5 +1,6 @@
 ---
-description: Post-implementation report -- what was built, divergences from plan
+name: execution-report
+description: "Post-implementation report: what was built, divergences from plan. Use after executing a plan to compare results vs intentions."
 ---
 
 # Execution Report for: $ARGUMENTS
@@ -60,5 +61,4 @@ Run all validation commands from `PROJECT.md`:
 
 ### Recommendations
 - [process improvements]
-- [CLAUDE.md updates to consider]
 ```

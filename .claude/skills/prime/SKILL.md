@@ -1,5 +1,6 @@
 ---
-description: Load project context -- structure, docs, recent activity
+name: prime
+description: "Load project context: structure, docs, recent activity. Use when starting a new session, switching context, or the user says 'prime' or 'load context'."
 ---
 
 # Prime: Load Project Context
@@ -16,7 +17,6 @@ Use Glob to map key directories.
 Read these files (if they exist):
 - `CLAUDE.md`
 - `PROJECT.md`
-- `AGENTS.md`
 - `README.md`
 - Any docs in `docs/architecture/`
 - Any docs in `docs/prds/`
@@ -24,15 +24,16 @@ Read these files (if they exist):
 ## Step 3: Key Files
 
 Identify and read:
-- Entry points (main, index, app files)
-- Configuration files (tsconfig, package.json, etc.)
-- Core type definitions or schemas
+- Entry points (src/bot/bot.ts, src/index.ts)
+- Configuration files (tsconfig.json, package.json, drizzle.config.ts)
+- Core type definitions (src/types/context.ts)
+- Database schema (src/db/schema.ts)
 
 ## Step 4: Current State
 
-- `git log --oneline -15` -- recent commits
-- `git branch -a` -- all branches
-- `git status` -- current working state
+- `git log --oneline -15` — recent commits
+- `git branch -a` — all branches
+- `git status` — current working state
 
 ## Output
 

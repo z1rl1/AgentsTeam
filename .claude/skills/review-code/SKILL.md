@@ -1,5 +1,6 @@
 ---
-description: Run code review and test validation on current changes
+name: review-code
+description: "Run code review and test validation on current changes. Use after implementation, before creating PRs, or when the user asks to review code."
 ---
 
 # Code Review

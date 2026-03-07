@@ -1,5 +1,6 @@
 ---
-description: Implement from a plan file, task by task with validation
+name: execute
+description: "Implement from a plan file, task by task with validation. Use when the user wants to execute an existing implementation plan from docs/plans/."
 ---
 
 # Execute Plan: $ARGUMENTS
