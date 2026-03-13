@@ -1,64 +1,75 @@
 ---
 name: execution-report
-description: "Post-implementation report: what was built, divergences from plan. Use after executing a plan to compare results vs intentions."
+description: Generate a post-implementation report documenting what was built, challenges encountered, and divergences from the original plan.
+argument-hint: [plan-file-path]
+disable-model-invocation: false
+context: fork
 ---
 
-# Execution Report for: $ARGUMENTS
+# Execution Report
 
-Generate a post-implementation analysis.
+Review and analyze the implementation you just completed.
 
-## Step 1: Review Plan
+## Context
 
-Read the plan file: `$ARGUMENTS`
+You have just finished implementing a feature. Before moving on, reflect on what was built, how it aligns with the plan, and what challenges were encountered.
 
-## Step 2: Review Changes
+## Process
 
-Run `git diff main...HEAD --stat` to see all file changes.
-Run `git log main...HEAD --oneline` to see commit history.
+1. Read the plan file: `$ARGUMENTS`
+2. Run `git diff main...HEAD --stat` (or appropriate base branch) to see all changes
+3. Run `git log main...HEAD --oneline` to see all commits
+4. Compare what was planned vs. what was implemented
 
-## Step 3: Compare Plan vs Reality
+## Generate Report
 
-For each planned task, check:
-- Was it implemented as specified?
-- Were there any divergences?
-- Were additional changes needed?
+### Meta Information
 
-## Step 4: Validate
-
-Run all validation commands from `PROJECT.md`:
-- Lint
-- Type check
-- Tests
-
-## Step 5: Generate Report
-
-```markdown
-## Execution Report
-
-### Summary
-- Plan file: [path]
-- Files added: [list]
-- Files modified: [list]
-- Lines changed: +X -Y
+- **Plan file**: [path to plan]
+- **Files added**: [list with paths]
+- **Files modified**: [list with paths]
+- **Lines changed**: +X -Y
 
 ### Validation Results
-- Lint: PASS/FAIL
-- Types: PASS/FAIL
-- Tests: PASS/FAIL (X/Y passing)
+
+Run and report results of:
+- Linting: run the lint command from `PROJECT.md`
+- Type checking: run the type check command from `PROJECT.md`
+- Tests: run the test command from `PROJECT.md`
 
 ### What Went Well
-- [specific wins]
 
-### Challenges
-- [difficulties and why]
+List specific things that worked smoothly:
+- [concrete examples]
+
+### Challenges Encountered
+
+List specific difficulties:
+- [what was difficult and why]
 
 ### Divergences from Plan
-| Planned | Actual | Reason | Type |
-|---------|--------|--------|------|
+
+For each divergence, document:
+
+**[Divergence Title]**
+- **Planned**: What the plan specified
+- **Actual**: What was implemented instead
+- **Reason**: Why this divergence occurred
+- **Type**: Better approach found | Plan assumption wrong | Requirement changed | Other
 
 ### Skipped Items
-- [what and why]
+
+List anything from the plan that was not implemented:
+- [what was skipped]
+- **Reason**: [why it was skipped]
 
 ### Recommendations
-- [process improvements]
-```
+
+Based on this implementation, what should change for next time?
+- Plan improvements: [suggestions]
+- Process improvements: [suggestions]
+- CLAUDE.md additions: [suggestions]
+
+---
+
+Plan: $ARGUMENTS

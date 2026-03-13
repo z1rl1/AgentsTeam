@@ -1,31 +1,9 @@
-# PRD Template — Agentic Product Development Team
-
-> This template is designed to be consumed by both humans and AI agents.
-> All acceptance criteria use GIVEN/WHEN/THEN predicates for direct test mapping.
-> Based on patterns from Addy Osmani's agent spec guide, Anthropic's effective agent
-> practices, and context-engineering research.
-
----
-
-## Instructions for Use
-
-1. Copy this template for each new feature
-2. Save to `docs/prds/PRD-[feature-name].md`
-3. Fill in all sections — mark unknowns with `[TBD]`
-4. Have the product-manager agent (or human PM) complete the draft
-5. Submit for review at the PRD Review checkpoint
-6. Once approved, this becomes the source of truth for all downstream agents
-
----
-
-# PRD: [Feature/Product Name]
+# PRD: [Feature Name]
 
 **Status**: Draft | In Review | Approved | In Progress | Complete
-**Author**: [Name or Agent]
-**Created**: YYYY-MM-DD
-**Last Updated**: YYYY-MM-DD
+**Author**: [name]
+**Created**: [date]
 **Priority**: P0 (critical) | P1 (high) | P2 (medium) | P3 (low)
-**Reviewers**: [Names]
 
 ---
 
@@ -33,31 +11,24 @@
 
 [1-2 sentences: What are we building and why? What user problem does it solve?]
 
+## 2. Mission
+
+[Product mission statement for this feature. What principle does it serve?]
+
 ### Core Principles
-1. [Guiding principle 1]
-2. [Guiding principle 2]
-3. [Guiding principle 3]
+1. [Principle 1]
+2. [Principle 2]
+3. [Principle 3]
 
----
+## 3. Background
 
-## 2. Problem Statement
+[Brief context: current state, motivation, relevant decisions. 2-3 sentences.]
 
-### What problem are we solving?
-[Describe the user or business problem. Be specific. Include evidence — metrics,
-user research quotes, support ticket volumes, competitive gaps.]
+## 4. Target Users
 
-### Who has this problem?
-[Target user segment. Persona, use case, technical level, context.]
+[Who benefits from this feature? What is their technical level? What are their key needs?]
 
-### How do we know this is real?
-[Data: user research, analytics, customer feedback, market analysis. Quantify impact.]
-
-### What happens if we don't solve it?
-[Business impact of inaction — churn, revenue loss, competitive disadvantage.]
-
----
-
-## 3. User Stories
+## 5. User Stories
 
 ### US-1: [Imperative Title]
 
@@ -87,7 +58,7 @@ THEN [expected result]
 | `{"email": "valid@test.com"}` | `{"status": 201, "id": "usr_xxx"}` |
 | `{"email": ""}` | `{"status": 400, "error": "Email required"}` |
 
-**Complexity**: S (hours) | M (1-2 days) | L (3-5 days)
+**Complexity**: S | M | L
 **Dependencies**: None
 
 ---
@@ -111,44 +82,28 @@ THEN [expected result]
 
 ---
 
-## 4. Scope
-
-### In Scope
-- [Feature/capability 1]
-- [Feature/capability 2]
-
-### Out of Scope
-- [Excluded item 1] — Reason: [why excluded]
-- [Excluded item 2] — Reason: [why excluded]
-
-### Future Considerations
-- [Potential future enhancement]
-
-> **Agent rule**: Do NOT implement anything under "Out of Scope" or "Future Considerations".
-
----
-
-## 5. Technical Context
+## 6. Technical Context
 
 ### Relevant Files
 
 | File | Purpose |
 |------|---------|
-| `[path from PROJECT.md]/[file]` | Logic to extend |
-| `[path from PROJECT.md]/[file]` | Data model to modify |
-| `[test path]/[file]` | Existing test patterns |
+| `[path from PROJECT.md]/[relevant]` | Logic to extend |
+| `[path from PROJECT.md]/[relevant]` | Data model to modify |
+| `[path from PROJECT.md]/[relevant]` | API/route layer |
+| `[test path from PROJECT.md]/[relevant]` | Existing test patterns |
 
 ### Existing Patterns to Follow
 
 ```
-// Paste a real code snippet from the codebase showing the pattern
-// agents should replicate
+// Example from codebase showing the pattern agents should replicate
+// (paste a real code snippet here)
 ```
 
 ### Data Model Changes (if applicable)
 
 ```
--- Describe any schema changes needed
+-- Describe any schema changes needed for this feature
 ```
 
 ### API Changes (if applicable)
@@ -160,120 +115,57 @@ METHOD /endpoint
   Errors:   [relevant error codes]
 ```
 
-### Constraints
-- [Technical constraint — e.g., must work with existing auth system]
-- [Performance constraint — e.g., response time < 200ms p95]
-- [Compatibility constraint — e.g., must support Safari 14+]
-
-### Dependencies
-
-| Dependency            | Owner         | Status    | Risk if Delayed          |
-|-----------------------|---------------|-----------|--------------------------|
-| [API/service]         | [team]        | [status]  | [impact]                 |
-
----
-
-## 6. Design & UX
-
-### User Flow
-```
-[Step 1: User action] → [Step 2: System response] → [Step 3: ...] → Done
-```
-
-### Wireframes / Mockups
-[Link to designs or describe layout]
-
-### Accessibility Requirements
-- WCAG 2.1 AA compliance
-- Keyboard navigable
-- Screen reader compatible
-- Color contrast ratio >= 4.5:1
-
-### Error States
-
-| Error Condition       | User-Facing Message         | Recovery Action              |
-|-----------------------|-----------------------------|------------------------------|
-| [condition]           | [message]                   | [what user can do]           |
-
----
-
 ## 7. Non-Functional Requirements
 
-| Requirement     | Target             | How to Validate              |
-|-----------------|--------------------|------------------------------|
-| API latency     | < 200ms p95        | Load test                    |
-| Test coverage   | > 80% new code     | Coverage command             |
-| Accessibility   | WCAG 2.1 AA        | Axe audit                    |
-| Uptime          | 99.9%              | Monitoring                   |
+| Requirement | Target | How to Validate |
+|-------------|--------|----------------|
+| API latency | < 200ms p95 | Load test |
+| Test coverage | > 80% new code | Coverage command from `PROJECT.md` |
+| Accessibility | WCAG 2.1 AA | Axe audit |
 
----
+## 8. Implementation Phases
 
-## 8. Success Metrics
+Follow the phase ordering from `PROJECT.md`. Customize phases below for this feature.
 
-### Primary Metrics (must move)
-| Metric          | Baseline    | Target       | How Measured             |
-|-----------------|-------------|-------------- |--------------------------|
-| [metric]        | [value]     | [target]     | [method]                 |
+### Phase 1: [Name from PROJECT.md]
 
-### Guardrail Metrics (must not regress)
-- [Page load time stays under X ms]
-- [Error rate stays below X%]
-- [Existing feature Y continues working]
-
----
-
-## 9. Implementation Phases
-
-Follow the phase ordering from `PROJECT.md`. Customize phases for this feature.
-
-### Phase 1: [Name — e.g., Data Layer]
-1. [Specific task]
-2. [Write tests for this phase]
+1. [Tasks for this phase]
+2. [Write tests]
 
 **Validation**: Run validation command from `PROJECT.md`
 
-### Phase 2: [Name — e.g., Service Layer]
-1. [Specific task]
+### Phase 2: [Name from PROJECT.md]
+
+1. [Tasks for this phase]
 2. [Write tests]
 
 **Validation**: Run validation command from `PROJECT.md`
 
 ### Phase 3+: [Continue as needed]
 
----
+Add or remove phases based on the project's architecture (see `PROJECT.md`).
 
-## 10. Rollout Plan
+## 9. Success Criteria
 
-| Phase   | Audience         | Advance Criteria            | Rollback Trigger         |
-|---------|------------------|-----------------------------|--------------------------|
-| Alpha   | Internal team    | No P0 bugs                  | Any data loss            |
-| Beta    | 10% of users     | Metrics trending positive   | Error rate > 5%          |
-| GA      | 100% of users    | Beta targets met            | Per incident response    |
+### Functional
+- [ ] All acceptance criteria from user stories pass
+- [ ] All API endpoints return correct status codes
+- [ ] Error states handled and surfaced to user
 
-### Feature Flags
-- Flag: `[feature_flag_name]`
-- Default: off
-- Rollout: gradual percentage
+### Quality
+- [ ] Test coverage > 80% for new code
+- [ ] Type safety rules from `PROJECT.md` followed
+- [ ] All linting and type checks pass
 
----
+### User Experience
+- [ ] [Specific UX goals for this feature]
 
-## 11. Risks & Mitigations
+## 10. Out of Scope
 
-| Risk              | Likelihood  | Impact      | Mitigation                     |
-|-------------------|-------------|-------------|--------------------------------|
-| [risk]            | High/Med/Low| High/Med/Low| [strategy]                     |
+- [Explicitly list what this PRD does NOT cover]
+- [Prevents scope creep during implementation]
 
----
-
-## 12. Open Questions
-
-| #  | Question                    | Owner         | Due Date   | Resolution |
-|----|-----------------------------|---------------|------------|------------|
-| 1  | [question]                  | [who decides] | [date]     | [TBD]      |
-
----
-
-## 13. Boundaries
+## 11. Boundaries
 
 ### ALWAYS (agent can do freely)
 - Run tests, linters, type checks
@@ -289,67 +181,25 @@ Follow the phase ordering from `PROJECT.md`. Customize phases for this feature.
 - Modify existing migration files
 - Commit secrets or credentials
 - Skip writing tests
-- Bypass type safety rules from `PROJECT.md`
+- Bypass type safety rules (see `PROJECT.md`)
 
----
+## 12. Risks & Mitigations
+
+| Risk | Impact | Mitigation |
+|------|--------|-----------|
+| [What could go wrong] | High/Med/Low | [Strategy] |
+
+## 13. Future Considerations
+
+- [Post-MVP enhancements]
+- [Integration opportunities]
+- [Advanced features for later phases]
 
 ## 14. Validation Checklist
 
 - [ ] All acceptance criteria have passing tests
-- [ ] Validation command from `PROJECT.md` passes
-- [ ] Type safety rules followed
+- [ ] Validation command from `PROJECT.md` passes (tests, type check, lint)
+- [ ] Type safety rules from `PROJECT.md` followed
 - [ ] No secrets in code
 - [ ] Migration is reversible (if applicable)
 - [ ] Success criteria all met
-- [ ] Code review approved
-
----
-
-## Appendix
-
-### Glossary
-| Term      | Definition                                                   |
-|-----------|--------------------------------------------------------------|
-| [term]    | [definition]                                                 |
-
-### Related Documents
-- [Link to design doc]
-- [Link to related PRDs]
-
-### Revision History
-| Date       | Author     | Changes                      |
-|------------|------------|------------------------------|
-| YYYY-MM-DD | [name]     | Initial draft                |
-
----
-
-## Agent Processing Notes
-
-> These notes help downstream agents parse and act on this PRD correctly.
-
-### For Architect Agent
-- Focus on Technical Context section and API/data model changes
-- Use constraints to guide technology choices
-- Dependencies determine integration sequencing
-
-### For Implementer Agent
-- User Stories define WHAT to build
-- Acceptance Criteria define WHEN it's done
-- Scope defines boundaries — respect "Out of Scope" strictly
-- Implementation Phases define the ORDER of work
-
-### For Tester Agent
-- Map every GIVEN/WHEN/THEN to at least one test case
-- Error States table requires negative test cases
-- Non-Functional Requirements define performance targets
-- Guardrail Metrics define regression test requirements
-
-### For Security Agent
-- Review data model changes for privacy/compliance risks
-- API contracts need input validation and auth checks
-- Feature flags: check for authorization bypass
-
-### For UX Agent
-- User Flow defines the interaction sequence
-- Accessibility Requirements are non-negotiable
-- Error States define all user-visible error experiences

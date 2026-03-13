@@ -1,24 +1,22 @@
 ---
 name: review-code
-description: "Run code review and test validation on current changes. Use after implementation, before creating PRs, or when the user asks to review code."
+description: Review current code changes against project standards. Runs code review and test validation, then reports findings with critical issues highlighted.
+disable-model-invocation: false
+context: fork
 ---
 
-# Code Review
+Review the current code changes using the following workflow.
 
 ## Step 1: Identify Changes
-
-Run `git status` and `git diff` to see all current changes.
+Run `git status` and `git diff` to identify all current changes.
 
 ## Step 2: Code Review
-
-Use the **code-reviewer** agent to review all modifications against project standards.
+Use the **code-reviewer** agent to review all changes against project standards.
 
 ## Step 3: Test Validation
-
-Use the **tester** agent to check if tests exist for changed code
+Use the **tester** agent to check if tests exist for the changed code
 and validate acceptance criteria coverage.
 
 ## Step 4: Report
-
-Present combined findings from both review and testing.
-Flag any critical issues that must be resolved before merge.
+Present the combined review and test findings.
+Highlight any critical issues that must be fixed before merging.

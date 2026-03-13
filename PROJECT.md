@@ -1,127 +1,180 @@
-# PROJECT.md — Telegram Bot Configuration
+# PROJECT.md
 
-> **Project-specific settings**: tech stack, commands, structure, conventions.
-> All agents read this file automatically.
+> **Project-specific configuration for the agentic development team.**
+> Fill in every section below before running workflows. Agents read this file to understand
+> your product, tech stack, commands, directory layout, and conventions.
+
+---
+
+## Product Overview
+
+> What is this project? Agents use this section to understand the business context,
+> make better design decisions, and write code that fits the product domain.
+
+| Field | Description |
+|-------|-------------|
+| Product name | `[e.g., RemindBot, Acme Dashboard]` |
+| One-line description | `[e.g., A Telegram bot that sends daily reminders]` |
+| Target users | `[e.g., busy professionals, small teams, developers]` |
+| Core problem | `[e.g., users forget recurring tasks and miss deadlines]` |
+| Key domain concepts | `[e.g., reminders, schedules, notifications, users]` |
+| Deployment target | `[e.g., Vercel, AWS Lambda, Docker on VPS, App Store]` |
+| External integrations | `[e.g., Telegram Bot API, Stripe, SendGrid, none]` |
+
+### Product Goals
+
+```
+[e.g.,
+1. Users can create, edit, and delete daily reminders via chat commands
+2. Reminders fire at the user's local time with timezone support
+3. Free tier: 5 reminders, paid tier: unlimited
+]
+```
 
 ---
 
 ## Tech Stack
 
-| Layer           | Technology                |
-|-----------------|---------------------------|
-| Language        | TypeScript 5.x            |
-| Runtime         | Node.js 20 LTS            |
-| Framework       | grammY 1.x                |
-| Database        | SQLite (better-sqlite3)   |
-| ORM / Query     | Drizzle ORM               |
-| Test framework  | Vitest                    |
-| E2E framework   | none                      |
-| Linter          | ESLint + Prettier          |
-| Type checker    | tsc (strict mode)          |
-| Package manager | pnpm                      |
+| Layer | Technology |
+|-------|-----------|
+| Language | `[e.g., TypeScript, Python, Go, Rust, Swift]` |
+| Runtime | `[e.g., Node.js 20, Python 3.12, Go 1.22]` |
+| Framework | `[e.g., Next.js, FastAPI, Gin, Actix-web]` |
+| Database | `[e.g., PostgreSQL, MongoDB, SQLite, none]` |
+| ORM / Query | `[e.g., Drizzle, Prisma, SQLAlchemy, GORM, none]` |
+| Test framework | `[e.g., Vitest, pytest, go test, cargo test]` |
+| E2E framework | `[e.g., Playwright, Cypress, none]` |
+| Linter | `[e.g., ESLint, Ruff, golangci-lint, clippy]` |
+| Type checker | `[e.g., tsc, mypy, built-in (Go/Rust), none]` |
+| Package manager | `[e.g., pnpm, npm, yarn, pip/uv, cargo, go modules]` |
 
 ## Commands
 
-| Task                  | Command                                |
-|-----------------------|----------------------------------------|
-| Install dependencies  | `pnpm install`                         |
-| Dev (polling mode)    | `pnpm dev`                             |
-| Build                 | `pnpm build`                           |
-| Run all tests         | `pnpm test`                            |
-| Run single test       | `pnpm test -- path/to/file.test.ts`    |
-| Test with coverage    | `pnpm test:coverage`                   |
-| Lint                  | `pnpm lint`                            |
-| Lint with auto-fix    | `pnpm lint --fix`                      |
-| Type check            | `pnpm typecheck`                       |
-| DB migrate            | `pnpm db:migrate`                      |
-| DB seed               | `pnpm db:seed`                         |
-| DB studio             | `pnpm db:studio`                       |
+> Replace every `[placeholder]` with the actual command for your project.
+> Delete rows that don't apply (e.g., "Type check" for Go where the compiler handles it).
 
-### Validation Command (run before every commit)
+| Task | Command |
+|------|---------|
+| Install dependencies | `[e.g., pnpm install]` |
+| Dev server | `[e.g., pnpm dev]` |
+| Build | `[e.g., pnpm build]` |
+| Run all tests | `[e.g., pnpm test]` |
+| Run single test file | `[e.g., pnpm test -- path/to/file.test.ts]` |
+| Test with coverage | `[e.g., pnpm test:coverage]` |
+| Lint | `[e.g., pnpm lint]` |
+| Lint with auto-fix | `[e.g., pnpm lint --fix]` |
+| Type check | `[e.g., pnpm typecheck]` |
+| E2E tests | `[e.g., pnpm test:e2e]` |
+| DB migrate | `[e.g., pnpm db:migrate]` |
+| DB seed | `[e.g., pnpm db:seed]` |
+
+### Validation Command
+
+> The single composite command that agents run before every commit.
+> Must exit non-zero on any failure.
 
 ```bash
-pnpm typecheck && pnpm lint && pnpm test
+[e.g., pnpm test && pnpm typecheck && pnpm lint]
 ```
 
 ## Directory Structure
 
+> Map your project's source layout. Agents use this to know where files go.
+
 ```
+[e.g.,
 src/
-├── bot/              # Bot instance, session, config
-│   ├── bot.ts        # Bot instance creation and plugin setup
-│   ├── session.ts    # Session configuration
-│   └── config.ts     # Environment variables and config
-├── commands/         # Command handlers (/start, /help, etc.)
-├── callbacks/        # Callback query handlers (inline buttons)
-├── conversations/    # Multi-step conversation flows (grammY conversations plugin)
-├── middleware/        # Custom middleware (auth, logging, rate-limit)
-├── keyboards/        # Keyboard builders (InlineKeyboard, Keyboard)
-├── services/         # Business logic (user service, etc.)
-├── db/               # Drizzle schema, migrations, queries
-│   ├── schema.ts     # Database schema definitions
-│   ├── migrate.ts    # Migration runner
-│   └── index.ts      # Database connection
-├── utils/            # Pure utility functions
-└── types/            # TypeScript type definitions
-    └── context.ts    # Custom context type with session data
+├── api/            # HTTP layer (routes, controllers, middleware)
+├── services/       # Business logic
+├── repositories/   # Data access
+├── models/         # Type definitions and schemas
+├── utils/          # Pure utility functions
+├── config/         # Environment and app configuration
+└── ui/             # Frontend components
+    ├── components/
+    ├── pages/
+    ├── hooks/
+    └── stores/
+]
 ```
 
 ## File Conventions
 
-| Convention             | Pattern                                    |
-|------------------------|--------------------------------------------|
-| Source file extension   | `.ts`                                      |
-| Test file pattern       | `*.test.ts`                                |
-| Test location           | `tests/` directory mirroring `src/`        |
-| Module naming           | `kebab-case.ts`                            |
-| Import ordering         | external → internal → relative             |
+| Convention | Pattern |
+|-----------|---------|
+| Source file extension | `[e.g., .ts, .py, .go, .rs]` |
+| Test file pattern | `[e.g., *.test.ts, *_test.go, test_*.py, *_test.rs]` |
+| Test location | `[e.g., colocated next to source, tests/ directory, same package]` |
+| Module naming | `[e.g., kebab-case.ts, snake_case.py, snake_case.go]` |
+| Component naming | `[e.g., PascalCase.tsx, N/A]` |
+| Import ordering | `[e.g., external → internal → relative, separated by blank lines]` |
 
 ## Code Standards
 
-- TypeScript strict mode, no `any` — use `unknown` and narrow
+> Project-specific coding rules that agents must follow.
+> Include only rules specific to your language/framework -- universal rules
+> (no swallowed errors, no committed secrets, tests required) are in CLAUDE.md.
+
+```
+[e.g.,
+- TypeScript strict mode, no `any` -- use `unknown` and narrow
 - `const` over `let`, never `var`
 - Named exports, no default exports
+- Barrel files (`index.ts`) for module public APIs
 - Functions under 30 lines; extract helpers when needed
-- Error handling: never swallow errors silently
+- Error handling: use `Result<T, E>` pattern, never throw from services
 - Every public function needs a doc comment
-- Use grammY's `Composer` for modular handler registration
-- Bot handlers must be pure functions that receive `Context` and return `void`
+]
+```
 
 ## Architecture Pattern
 
+> Describe the data flow / layering pattern for your project.
+
 ```
-Bot Entry Point → Middleware → Router (commands/callbacks/conversations) → Service → Database
+[e.g.,
+Route → Controller → Service → Repository → Database
+]
 ```
 
 ## Security Considerations
 
-- Bot token stored in `.env`, never committed
-- Input validation on all user messages before processing
-- Rate limiting middleware to prevent abuse
-- SQL: parameterized queries only (Drizzle handles this)
-- NEVER log bot tokens, user phone numbers, or PII
-- Webhook mode: validate Telegram's secret token header
+> Project-specific security rules. Universal rules (never commit secrets,
+> never disable security middleware) are in CLAUDE.md.
+
+```
+[e.g.,
+- Auth: JWT tokens in httpOnly cookies
+- Input validation: Zod schemas on all API endpoints
+- SQL: parameterized queries only (ORM handles this)
+- NEVER log tokens, passwords, or PII
+]
+```
 
 ## Implementation Phases
 
+> Default ordering for multi-phase implementations (PRDs, design docs, /plan).
+> Customize for your architecture. Each phase should be independently testable.
+
 ```
-Phase 1: Bot Setup — bot instance, config, session, basic /start and /help
-Phase 2: Database — Drizzle schema, migrations, connection
-Phase 3: Core Commands — main bot command handlers
-Phase 4: Keyboards & Callbacks — inline keyboards and callback handlers
-Phase 5: Conversations — multi-step dialog flows
-Phase 6: Middleware — auth, logging, rate-limiting
-Phase 7: Webhook — production webhook setup with Express
+[e.g.,
+Phase 1: Data Layer -- migrations, models, repository methods
+Phase 2: Service Layer -- business logic, validation schemas
+Phase 3: API Layer -- routes, controllers, middleware
+Phase 4: UI -- components, hooks, pages
+]
 ```
 
 ## Permissions Guidance
 
-Bash commands that agents should be pre-approved for:
+> Commands to add to `.claude/settings.json` for your project's tools.
+> These let agents run validation without prompting for permission.
 
 ```json
+[e.g.,
 "Bash(pnpm test*)",
 "Bash(pnpm lint*)",
 "Bash(pnpm typecheck*)",
-"Bash(pnpm build*)",
-"Bash(pnpm db:*)"
+"Bash(pnpm build*)"
+]
 ```

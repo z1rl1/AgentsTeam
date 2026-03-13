@@ -1,49 +1,113 @@
 ---
 name: execute
-description: "Implement from a plan file, task by task with validation. Use when the user wants to execute an existing implementation plan from docs/plans/."
+description: Execute an implementation plan created by /plan. Implements each task in order with validation at every step.
+argument-hint: [path-to-plan]
+disable-model-invocation: true
+context: fork
 ---
 
-# Execute Plan: $ARGUMENTS
+# Execute: Implement from Plan
 
-Implement the plan specified in `$ARGUMENTS`.
+## Plan to Execute
 
-## Step 1: Load Plan
+Read the plan file: `$ARGUMENTS`
 
-Read the entire plan file. Understand all tasks, dependencies, validation commands,
-and mandatory context files.
+## Execution Instructions
 
-## Step 2: Read Context
+### 1. Read and Understand
 
-Study ALL files listed in the "Mandatory Reading" section.
-Note existing patterns and conventions.
+- Read the ENTIRE plan carefully
+- Understand all tasks and their dependencies
+- Note the validation commands to run
+- Review the context references and mandatory files to read
+- Review the testing strategy
 
-## Step 3: Implement
+### 2. Read Mandatory Context
 
-For each task in order:
-1. Check that all dependencies are completed
-2. Navigate to the target file
-3. Implement according to the task specification
-4. Maintain consistency with existing code patterns
-5. Run the task's validation command
-6. Fix any issues before moving to the next task
+Read every file listed in "Files to Read Before Implementing (MANDATORY)".
+Understand the patterns, naming conventions, and code structure before writing anything.
 
-## Step 4: Test
+### 3. Execute Tasks in Order
 
-Create all specified test files following the testing strategy.
-Run the full test suite from `PROJECT.md`.
+For EACH task in "Step-by-Step Tasks":
 
-## Step 5: Validate
+#### a. Navigate to the task
+- Identify the file and action required
+- Read existing related files if modifying
 
-Run all validation commands:
-- The project validation command from `PROJECT.md`
-- Any additional validation commands from the plan
-- Address all failures before proceeding
+#### b. Implement the task
+- Follow the detailed specifications exactly
+- Maintain consistency with existing code patterns
+- Include proper type hints and documentation
+- Add structured error handling where appropriate
 
-## Step 6: Report
+#### c. Verify as you go
+- After each file change, check syntax
+- Ensure imports are correct
+- Verify types are properly defined
+- Run the task's VALIDATE command
 
-Present a summary:
-- Completed tasks with file paths
-- Tests created and their results
-- All validation outputs
-- Any divergences from the plan
-- Confirmation: ready for code review
+### 4. Implement Testing Strategy
+
+After completing implementation tasks:
+
+- Create all test files specified in the plan
+- Implement all test cases mentioned
+- Follow the testing approach outlined
+- Ensure tests cover edge cases
+
+### 5. Run Validation Commands
+
+Execute ALL validation commands from the plan in order:
+
+Run the validation commands from `PROJECT.md` (lint, type check, tests).
+
+Plus any feature-specific validation commands from the plan.
+
+If any command fails:
+- Fix the issue
+- Re-run the command
+- Continue only when it passes
+
+### 6. Final Verification
+
+Before completing:
+
+- [ ] All tasks from plan completed
+- [ ] All tests created and passing
+- [ ] All validation commands pass
+- [ ] Code follows project conventions
+- [ ] Documentation added/updated as needed
+
+## Output Report
+
+Provide summary:
+
+### Completed Tasks
+- List of all tasks completed
+- Files created (with paths)
+- Files modified (with paths)
+
+### Tests Added
+- Test files created
+- Test cases implemented
+- Test results
+
+### Validation Results
+```
+Output from each validation command
+```
+
+### Divergences from Plan
+If you deviated from the plan:
+- What changed and why
+- Whether the divergence was an improvement or a workaround
+
+### Ready for Review
+- Confirm all changes are complete
+- Confirm all validations pass
+- Ready for `/review-code` skill
+
+---
+
+Plan: $ARGUMENTS

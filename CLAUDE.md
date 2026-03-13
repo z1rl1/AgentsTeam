@@ -1,264 +1,217 @@
-# CLAUDE.md — Telegram Bot Development Team
+# CLAUDE.md
+
+> Claude Code-specific configuration and universal agent instructions.
+> For tech stack, commands, and directory layout see `PROJECT.md`.
 
 ## Project Overview
 
-Agentic product development team for building **Telegram bots** with grammY framework.
-Specialized AI agents handle the full lifecycle: requirements, architecture, implementation,
-testing, review, debugging, and documentation.
+Agentic product development team workspace. Multi-agent architecture with specialized
+roles handling requirements, architecture, implementation, testing, review, and documentation.
 
-> **Tech stack and commands** live in [`PROJECT.md`](PROJECT.md).
+**Tech Stack**: See `PROJECT.md` for language, runtime, framework, database, and tooling.
 
----
+## Agent Team Structure
 
-## Agent Team
+This project uses Claude Code sub-agents defined in `.claude/agents/`. Each agent has a
+specific role, tool access, and permission model. The team lead (your main Claude Code session)
+delegates to specialists:
 
-Agents are defined in `.claude/agents/`. The main Claude Code session acts as team lead (orchestrator) and delegates to specialists.
+| Agent | Role | Model | When to Use |
+|-------|------|-------|-------------|
+| `product-manager` | PRDs, user stories, acceptance criteria | opus | Planning new features |
+| `architect` | System design, API contracts, data models | opus | Technical design decisions |
+| `implementer` | Code writing, feature implementation | inherit | Building features |
+| `code-reviewer` | Quality, security, performance review | inherit | After code changes |
+| `tester` | Test writing, coverage, validation | sonnet | Verifying acceptance criteria |
+| `debugger` | Root cause analysis, bug fixing | inherit | Investigating bugs |
+| `docs-writer` | API docs, architecture docs, changelogs | sonnet | Documentation tasks |
 
-| Agent             | Role                                     | Model   | When to Use                    |
-|-------------------|------------------------------------------|---------|--------------------------------|
-| `product-manager` | PRDs, user stories, acceptance criteria   | opus    | Planning new features          |
-| `architect`       | System design, API contracts, ADRs        | opus    | Technical design decisions     |
-| `implementer`     | Code writing, feature implementation      | inherit | Building features              |
-| `code-reviewer`   | Quality, security, performance review     | inherit | After code changes             |
-| `tester`          | Test writing, coverage, validation        | sonnet  | Verifying acceptance criteria  |
-| `debugger`        | Root cause analysis, bug investigation    | inherit | Investigating bugs             |
-| `docs-writer`     | API docs, architecture docs, changelogs   | sonnet  | Documentation tasks            |
-
----
-
-## Skills
+## Workflow Skills
 
 Custom skills in `.claude/skills/`:
 
 ### Core Workflows
-- `/new-feature [description]` — Full pipeline: PRD → design → implement → test → review
-- `/fix-bug [description]` — Bug pipeline: investigate → fix → test → review
-- `/review-code` — Code review + test validation on current changes
+- `/bootstrap [project description]` -- Initialize a new project from scratch: gather requirements -> fill PROJECT.md -> scaffold -> validate
+- `/new-feature [description]` -- Full feature workflow: PRD -> discuss -> design -> implement -> test -> verify -> review
+- `/fix-bug [description]` -- Bug workflow: investigate -> fix -> test -> review (supports GitHub issue IDs)
+- `/review-code` -- Run code review on current changes
+- `/discuss [PRD-path]` -- Capture implementation preferences before technical design
+- `/quick [description]` -- Fast implementation for small changes (skips PRD/design pipeline)
+- `/refactor [description]` -- Large multi-phase refactoring with incremental validation
+- `/release [version]` -- Generate release notes, changelog, and version bump
 
-### Plan/Execute
-- `/plan [feature]` — Create implementation plan with codebase analysis
-- `/execute [plan-path]` — Implement from a plan file, task by task
-- `/prime` — Load project context (structure, docs, recent activity)
-- `/commit` — Atomic commit with conventional prefix
+### Plan/Execute Loop
+- `/plan [feature]` -- Create a detailed implementation plan with codebase analysis
+- `/execute [plan-path]` -- Implement from a plan file, task by task with validation
+- `/prime` -- Load project context (structure, docs, recent activity)
+- `/commit` -- Stage and create an atomic commit with conventional prefix
 
-### Validation
-- `/validate` — Full project health check (lint, types, tests, build)
-- `/execution-report [plan-path]` — Post-implementation analysis
-- `/system-review [plan] [report]` — Meta-analysis: plan vs execution
+### Validation & Process Improvement
+- `/validate` -- Full project health check (lint, types, tests, build, code quality)
+- `/execution-report [plan-path]` -- Post-implementation report: what was built, divergences from plan
+- `/system-review [plan] [report]` -- Meta-analysis: plan vs. execution, process improvements
+- `/verify [PRD-path]` -- Verify implementation against PRD acceptance criteria with evidence
+- `/retro [feature]` -- Post-implementation retrospective that updates CLAUDE.md with learnings
 
-### GitHub
-- `/github-issue-rca [issue-id]` — Root cause analysis → `docs/rca/`
+### Testing & Security
+- `/e2e-test [feature]` -- Design and implement end-to-end integration tests
+- `/security-audit [area]` -- Security-focused review (OWASP Top 10, deps, auth)
 
-### Telegram Bot
-- `/add-command [name]` — Create new bot command handler
-- `/add-callback [name]` — Add callback query handler for inline buttons
-- `/add-conversation [name]` — Create multi-step conversation dialog
-- `/add-middleware [name]` — Add grammY middleware
-- `/add-keyboard [name]` — Create inline or reply keyboard
-- `/setup-webhook` — Configure webhook deployment
-- `/add-menu` — Set up bot command menu via BotFather API
+### Maintenance
+- `/update-deps [package]` -- Dependency updates with security audit and validation
+- `/perf [area]` -- Performance profiling, optimization, and benchmarking
+- `/migrate [description]` -- Database/API migration workflow with rollback plan
+- `/tech-debt [area]` -- Identify and address technical debt
 
----
+### Session Management
+- `/pause` -- Save current work context to STATE.md for session continuity
+- `/resume` -- Restore context from STATE.md and continue where you left off
 
-## Orchestration Patterns
+### Documentation & Investigation
+- `/onboard [area]` -- Generate onboarding docs from existing codebase
+- `/rca [issue-id]` -- Investigate a GitHub issue, create RCA document at `docs/rca/`
 
-### Sequential Pipeline (Default)
-For well-defined features with clear dependencies:
-```
-PM → Architect → Implementer → Tester → Code Reviewer
-```
-
-### Parallel Specialization
-For features with independent work streams:
-```
-              Architect
-                  │
-       ┌──────────┼──────────┐
-    Frontend    Backend    Database
-       │          │          │
-       └──────────┼──────────┘
-                  │
-              Tester (integration)
-```
-
-### Evaluator-Optimizer Loop
-For quality-critical features:
-```
-Implementer → Tester → Implementer (fixes) → Tester (re-test)
-                              ↑                      │
-                              └──────────────────────┘
-```
-
-### Research Spike
-For exploratory work:
-```
-Lead spawns 3 Research Agents in parallel → synthesizes → Architect decides
-```
-
----
-
-## Development Workflow
-
-### Feature Development
-```
-1. Human provides feature idea
-2. product-manager → PRD in docs/prds/
-3. Human reviews + approves
-4. architect → design doc in docs/architecture/
-5. Human reviews + approves
-6. implementer → code on feature branch
-7. tester → validates acceptance criteria
-8. code-reviewer → reviews changes
-9. Human merges
-```
-
-### Bug Fixing
-```
-1. Human describes bug (or GitHub issue ID)
-2. debugger → root cause analysis
-3. Human approves fix
-4. implementer → applies fix
-5. tester → regression test
-6. code-reviewer → reviews
-7. Human merges
-```
-
----
+### Domain Skills (auto-loaded by Claude when relevant)
+- `react-patterns` -- React component patterns, hooks, state management, accessibility
+- `nextjs-conventions` -- App Router, Server/Client Components, data fetching, middleware
+- `node-backend` -- Middleware, error handling, validation, logging, async patterns
+- `api-design` -- REST conventions, response formats, pagination, error responses
+- `database-patterns` -- Schema design, migrations, query optimization, indexing
+- `frontend-testing` -- React Testing Library, component tests, MSW mocking
+- `backend-testing` -- API tests, database setup/teardown, fixtures, factories
+- `auth-patterns` -- JWT flows, session management, RBAC, password hashing, CSRF
 
 ## Directory Structure
 
 ```
 .claude/
-  agents/           # Agent definitions
-  skills/           # Workflow skills (SKILL.md format)
-  settings.json     # Shared team settings
-  settings.local.json # Personal settings (gitignored)
+  agents/           -- Agent definitions (role, tools, model, system prompt)
+  skills/           -- Workflow skills and domain knowledge (SKILL.md format)
+  reference/        -- Tech-stack best practices (populated per project)
+  settings.json     -- Shared team settings (committed)
+  settings.local.json -- Personal settings (gitignored)
 docs/
-  prds/             # Product Requirements Documents
-  architecture/     # Technical design documents
-  plans/            # Implementation plans
-  rca/              # Root Cause Analysis documents
-  templates/        # Document templates
-src/
-  bot/              # Bot setup and configuration
-  commands/         # Bot command handlers (/start, /help, etc.)
-  callbacks/        # Callback query handlers
-  conversations/    # Multi-step conversation flows
-  middleware/        # grammY middleware (auth, logging, etc.)
-  keyboards/        # Keyboard builders (inline, reply)
-  services/         # Business logic
-  db/               # Database schema and queries (Drizzle)
-  utils/            # Shared utilities
-  types/            # TypeScript type definitions
-tests/              # Test files mirroring src/ structure
-CLAUDE.md           # This file
-PROJECT.md          # Tech stack and commands
+  prds/             -- Product Requirements Documents
+  architecture/     -- Technical design documents and CONTEXT-*.md decision docs
+  plans/            -- Implementation plans and verification reports
+  rca/              -- Root Cause Analysis documents and persistent debug sessions
+  state/            -- Session state persistence (STATE.md)
+  templates/        -- PRD, design doc, and context templates
+CLAUDE.md           -- This file (Claude-specific project context + universal agent instructions)
+PROJECT.md          -- Project-specific configuration (tech stack, commands, conventions)
 ```
 
----
+## Setup
 
-## Code Standards
+See `PROJECT.md` for install, environment setup, and database commands.
 
-- TypeScript strict mode, no `any` — use `unknown` and narrow
-- `const` over `let`, never `var`
-- Named exports, no default exports
-- Functions under 30 lines; extract helpers when needed
-- Error handling: never swallow errors silently
-- All new business logic must have tests
+## Build & Test
+
+See `PROJECT.md` for the full command table (dev, build, test, lint, typecheck, etc.).
+
+## Architecture
+
+See `PROJECT.md` for the project directory structure and architecture pattern.
+
+```
+docs/
+├── prds/           # Product Requirements Documents
+├── architecture/   # Technical design documents
+└── templates/      # Document templates
+```
+
+## Code Style
+
+- Functions should have a single responsibility and stay short
+- Use clear, descriptive names; no abbreviations
 - Functional patterns preferred over classes
-- Run validation command from `PROJECT.md` before every commit
+- Error handling: never swallow errors silently
+- Follow the import ordering convention defined in `PROJECT.md`
+- Follow file naming conventions from `PROJECT.md`
+- Run the validation command from `PROJECT.md` before every commit
+- See `PROJECT.md` for language-specific coding rules
 
----
+## Testing
+
+- Use factories and fixtures, not hardcoded test data
+- Mock external services, never call real APIs in tests
+- Every acceptance criterion from the PRD must have at least one test
+- Follow test file naming and location conventions from `PROJECT.md`
+
+## Security
+
+- NEVER log tokens, passwords, or PII
+- NEVER commit `.env`, credentials, or API keys
+- NEVER disable security middleware for convenience
+- Injection prevention appropriate to the tech stack (see `PROJECT.md`)
+- See `PROJECT.md` for project-specific security rules
 
 ## Git Workflow
 
-- Branch naming: `feat/`, `fix/`, `chore/`, `refactor/`, `docs/`, `test/`
-- Commits: conventional format `<type>(<scope>): <description>`
-- PRs require passing CI + human approval
+- Branches: `feat/description`, `fix/description`, `chore/description`
+- Commits: conventional commits (`feat:`, `fix:`, `chore:`, `docs:`)
+- PRs: require CI pass + human approval
 - Squash merge to main
 
----
+## Development Workflow
+
+### Feature Development (idea -> merge)
+
+```
+1. Human provides feature idea
+2. product-manager agent -> creates PRD in docs/prds/
+3. Human reviews + approves PRD
+3.5. discuss skill -> captures preferences in CONTEXT-[feature].md
+4. architect agent -> creates design doc in docs/architecture/
+5. Human reviews + approves design
+6. implementer agent -> writes code on feature branch
+7. tester agent -> validates acceptance criteria, writes tests
+7.5. verify skill -> maps acceptance criteria to evidence
+8. code-reviewer agent -> reviews all changes
+9. Human reviews PR and merges
+```
+
+### Bug Fixing
+
+```
+1. Human describes the bug
+2. debugger agent -> investigates root cause
+3. Human approves proposed fix
+4. implementer agent -> applies fix
+5. tester agent -> adds regression test
+6. code-reviewer agent -> reviews fix
+7. Human reviews and merges
+```
 
 ## Boundaries
 
-### Always (agents can do freely)
+### ALWAYS (agents can do freely)
 - Read any file in the project
 - Run tests, linters, type checks
 - Create/edit source files and test files
 - Create branches and commits
 
-### Ask First (requires human approval)
-- Adding new dependencies
-- Changing database schema
-- Modifying bot token or webhook configuration
-- Changing shared interfaces or API contracts
-- Architectural decisions affecting multiple modules
+### ASK FIRST (requires human approval)
+- Add new dependencies
+- Modify database schemas
+- Change shared interfaces or API contracts
+- Modify CI/CD configuration
+- Delete files or directories
 
-### Never
-- Commit secrets, API keys, bot tokens, or credentials
-- Bypass security checks or linting
-- Push directly to main branch
-- Delete or modify production data
+### NEVER
+- Commit secrets, API keys, or credentials
 - Modify existing migration files after they've been applied
-- Disable tests to make them pass
-
----
-
-## Agent Communication Protocol
-
-Agents do not talk to each other directly. Communication flows through:
-
-1. **File artifacts** — PRDs, design docs, test plans saved to `docs/`
-2. **Shared task list** — TaskCreate/TaskUpdate for tracking work items
-3. **Orchestrator summaries** — Lead passes relevant context when spawning workers
-
-### Handoff Format
-
-```markdown
-## Handoff: [Agent Role] → [Next Agent Role]
-
-### Status: [Complete | Blocked | Needs Review]
-
-### Deliverables
-- [file path 1]: [description]
-
-### Key Decisions
-- [decision]
-
-### Open Questions / Risks
-- [question or risk]
-
-### Next Steps
-- [what the next agent should focus on]
-```
-
----
+- Push to main/master directly
+- Bypass the project's type safety settings (see PROJECT.md)
+- Skip writing tests for new logic
 
 ## Context Management
 
-- Use `/clear` between unrelated tasks
-- Delegate research-heavy work to subagents
-- Keep the orchestrator session lean — plan and route, don't explore
-- Store specs, plans, ADRs as files, not in conversation context
-- Use Plan Mode for any task touching more than 2 files
-
----
-
-## Quality Gates
-
-| Gate              | Owner           | Criteria                                     |
-|-------------------|-----------------|----------------------------------------------|
-| Requirements      | Product Manager | PRD approved, stories defined                |
-| Architecture      | Architect       | Design doc written, approach confirmed       |
-| Implementation    | Developer       | Code complete, validation passing            |
-| Testing           | QA Engineer     | All acceptance criteria tested, coverage ok  |
-| Code Review       | Code Reviewer   | Quality, performance, security approved      |
-
-## Human-in-the-Loop Checkpoints
-
-| Checkpoint            | When                          | What Requires Approval               |
-|-----------------------|-------------------------------|--------------------------------------|
-| PRD Review            | After PM drafts PRD           | Requirements, scope, priorities      |
-| Architecture Review   | After Architect writes design | Tech decisions, trade-offs           |
-| Implementation Review | After Developer completes     | Code quality, approach correctness   |
-| Release Approval      | After all gates pass          | Final go/no-go for deployment        |
+- For multi-phase implementations, spawn fresh sub-agents per phase to prevent
+  context degradation (quality drops as context windows fill)
+- The `/execute` skill should use the implementer agent per task, not accumulate
+  all implementation work in a single agent session
+- For complex debugging, save progress to `docs/rca/` and spawn fresh debugger
+  agents for new hypotheses
+- If you notice quality degradation (repetition, confusion, rushed output), save
+  state with `/pause` and start a fresh session with `/resume`
