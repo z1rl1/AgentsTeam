@@ -1,205 +1,370 @@
-# PRD: [Feature Name]
+# Product Requirements Document (PRD)
 
-**Status**: Draft | In Review | Approved | In Progress | Complete
-**Author**: [name]
-**Created**: [date]
-**Priority**: P0 (critical) | P1 (high) | P2 (medium) | P3 (low)
+A template for collaborative work between product teams and autonomous development agents.  
+Acceptance conditions use structured rules so they can be mapped directly to tests and automation.
 
 ---
 
-## 1. Objective
+## Document Metadata
 
-[1-2 sentences: What are we building and why? What user problem does it solve?]
-
-## 2. Mission
-
-[Product mission statement for this feature. What principle does it serve?]
-
-### Core Principles
-1. [Principle 1]
-2. [Principle 2]
-3. [Principle 3]
-
-## 3. Background
-
-[Brief context: current state, motivation, relevant decisions. 2-3 sentences.]
-
-## 4. Target Users
-
-[Who benefits from this feature? What is their technical level? What are their key needs?]
-
-## 5. User Stories
-
-### US-1: [Imperative Title]
-
-**As a** [persona]
-**I want to** [action]
-**So that** [benefit]
-
-**Acceptance Criteria:**
-
-```
-GIVEN [precondition]
-WHEN [action]
-THEN [expected result]
-AND [additional assertion]
-```
-
-```
-GIVEN [precondition]
-WHEN [action]
-THEN [expected result]
-```
-
-**Examples:**
-
-| Input | Expected Output |
-|-------|----------------|
-| `{"email": "valid@test.com"}` | `{"status": 201, "id": "usr_xxx"}` |
-| `{"email": ""}` | `{"status": 400, "error": "Email required"}` |
-
-**Complexity**: S | M | L
-**Dependencies**: None
+| Field | Value |
+|------|----------|
+| **PRD** | [Feature / Capability Name] |
+| **Stage** | Draft \| Review \| Approved \| Building \| Released |
+| **Owner** | [Product Manager / Agent] |
+| **Created** | YYYY-MM-DD |
+| **Updated** | YYYY-MM-DD |
+| **Priority** | P0 \| P1 \| P2 \| P3 |
+| **Stakeholders** | [Names or teams] |
 
 ---
 
-### US-2: [Imperative Title]
+## 1. Overview
 
-**As a** [persona]
-**I want to** [action]
-**So that** [benefit]
+### Feature Summary
 
-**Acceptance Criteria:**
+Describe briefly what this feature introduces and the main value it delivers to the user.
 
-```
-GIVEN [precondition]
-WHEN [action]
-THEN [expected result]
-```
+> **Example:** This feature allows users to create automated reports from analytics data and export them as scheduled emails.
 
-**Complexity**: S | M | L
-**Dependencies**: US-1
+### Strategic Goal
+
+Explain how this feature supports the product strategy or roadmap.
 
 ---
 
-## 6. Technical Context
+## 2. Problem Description
 
-### Relevant Files
+### Current Situation
 
-| File | Purpose |
+Describe how things work today.
+
+### User Pain Points
+
+Main difficulties users face:
+
+- Pain point 1  
+- Pain point 2  
+- Pain point 3  
+
+### Evidence
+
+Supporting information such as:
+
+- analytics data  
+- support tickets  
+- user interviews  
+- competitive gaps  
+
+### Impact if Ignored
+
+What happens if the problem remains unsolved.
+
+---
+
+## 3. Target Audience
+
+| Segment | Description | Needs |
+|---------|-------------|--------|
+| [Segment name] | [Who they are] | [Primary need] |
+
+Include relevant characteristics:
+
+- experience level  
+- environment (mobile / desktop)  
+- technical knowledge  
+
+---
+
+## 4. User Scenarios
+
+Describe the core workflows supported by the feature.
+
+### Scenario 1 — [Action Title]
+
+**User role:** [persona]
+
+**Goal:** The user wants to perform an action in order to achieve a specific outcome.
+
+**Acceptance Conditions:**
+
+```
+GIVEN [initial state]
+WHEN [user performs action]
+THEN [system produces result]
+
+GIVEN [state]
+WHEN [action]
+THEN [result]
+AND [extra validation]
+```
+
+**Example Cases:**
+
+| Request | Result |
+|---------|--------|
+| `{email:"test@test.com"}` | `{status:201, user_id:"abc123"}` |
+| `{email:""}` | `{status:400, error:"email required"}` |
+
+- **Estimated Effort:** Small \| Medium \| Large  
+- **Blocked By:** [dependency]
+
+---
+
+### Scenario 2 — [Action Title]
+
+**User role:** [persona]
+
+**Goal:** The user performs another task enabled by the feature.
+
+**Acceptance Conditions:**
+
+```
+GIVEN [condition]
+WHEN [action]
+THEN [expected outcome]
+```
+
+- **Estimated Effort:** Small \| Medium \| Large  
+- **Blocked By:** Scenario 1  
+
+---
+
+## 5. Functional Scope
+
+### Included
+
+- Capability A  
+- Capability B  
+- Capability C  
+
+### Excluded
+
+| Item | Reason |
+|------|--------|
+| Feature X | Planned for future version |
+| Feature Y | Out of project scope |
+
+### Potential Extensions
+
+Ideas that may be implemented later.
+
+---
+
+## 6. Technical Environment
+
+### Relevant Components
+
+| Location | Description |
+|----------|-------------|
+| `src/...` | Module to update |
+| `api/...` | API layer |
+| `tests/...` | Existing test reference |
+
+### Coding Pattern Reference
+
+Example snippet illustrating architecture or design pattern. Agents should replicate this style.
+
+### Data Layer Updates
+
+Describe database modifications or new tables.
+
+> **Example:**  
+> `table reports` — id, user_id, schedule, created_at  
+
+### API Specification
+
+**POST** `/reports`
+
+**Request:**
+```json
+{
+  "user_id": "string",
+  "schedule": "string"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "string",
+  "created": true
+}
+```
+
+**Possible errors:** 400 invalid request · 403 unauthorized · 500 internal error  
+
+### Constraints
+
+- Must integrate with existing authentication system  
+- Response time target: &lt; 200ms (p95)  
+- Browser compatibility: modern browsers  
+
+---
+
+## 7. UX / Interaction Design
+
+### Flow Diagram
+
+```
+User action
+    ↓
+UI form submission
+    ↓
+Backend validation
+    ↓
+Database write
+    ↓
+Success confirmation
+```
+
+### Interface Notes
+
+Describe layout or interaction logic if wireframes are unavailable.
+
+### Error Handling
+
+| Situation | Message | Recovery |
+|-----------|---------|----------|
+| Invalid input | "Please provide a valid value" | Correct form |
+| Network error | "Connection failed" | Retry |
+
+---
+
+## 8. Quality Requirements
+
+| Category | Requirement |
+|----------|-------------|
+| Performance | API response &lt; 200ms |
+| Reliability | 99.9% uptime |
+| Accessibility | WCAG 2.1 AA |
+| Code Quality | &gt;80% test coverage |
+
+**Validation methods:** load testing · automated tests · accessibility scanning  
+
+---
+
+## 9. Development Plan
+
+Implementation should follow project architecture defined in **PROJECT.md**.
+
+### Step 1 — Data Layer
+
+**Tasks:**
+
+- implement database changes  
+- create migration  
+- add unit tests  
+
+**Validation:** run project validation pipeline.
+
+### Step 2 — Business Logic
+
+**Tasks:**
+
+- implement service layer  
+- add input validation  
+- write tests  
+
+**Validation:** run project validation pipeline.
+
+### Step 3 — API / Interface
+
+**Tasks:**
+
+- implement endpoint  
+- add integration tests  
+- connect UI if applicable  
+
+**Validation:** run project validation pipeline.
+
+---
+
+## 10. Deployment Strategy
+
+| Stage | Users | Requirement |
+|-------|--------|-------------|
+| Internal | team only | no critical issues |
+| Beta | limited users | positive metrics |
+| Release | all users | stability confirmed |
+
+### Feature Toggle
+
+- **Feature flag name:** `[flag_name]`  
+- **Default:** disabled  
+- **Rollout:** incremental percentage  
+
+---
+
+## 11. Risk Assessment
+
+| Risk | Probability | Impact | Mitigation |
+|------|-------------|--------|------------|
+| Dependency delay | Medium | High | fallback plan |
+| Performance issue | Low | Medium | load testing |
+
+---
+
+## 12. Outstanding Questions
+
+| # | Question | Responsible | Status |
+|---|----------|--------------|--------|
+| 1 | [topic] | [owner] | open |
+
+---
+
+## 13. Operating Rules for Agents
+
+### Allowed
+
+Agents may:
+
+- run tests  
+- update files related to this feature  
+- reuse existing patterns  
+
+### Requires Approval
+
+Agents must ask before:
+
+- introducing new dependencies  
+- modifying shared interfaces  
+- altering database schema beyond defined changes  
+
+### Forbidden
+
+Agents must never:
+
+- commit secrets  
+- remove tests  
+- modify historical migrations  
+- bypass type safety rules  
+
+---
+
+## 14. Completion Checklist
+
+Before marking the feature complete:
+
+- [ ] All acceptance conditions validated  
+- [ ] Tests passing  
+- [ ] Code coverage meets threshold  
+- [ ] No security issues  
+- [ ] Documentation updated  
+- [ ] Code review completed  
+
+---
+
+## Appendix
+
+### Terminology
+
+| Term | Meaning |
 |------|---------|
-| `[path from PROJECT.md]/[relevant]` | Logic to extend |
-| `[path from PROJECT.md]/[relevant]` | Data model to modify |
-| `[path from PROJECT.md]/[relevant]` | API/route layer |
-| `[test path from PROJECT.md]/[relevant]` | Existing test patterns |
+| [term] | definition |
 
-### Existing Patterns to Follow
+### Related Resources
 
-```
-// Example from codebase showing the pattern agents should replicate
-// (paste a real code snippet here)
-```
-
-### Data Model Changes (if applicable)
-
-```
--- Describe any schema changes needed for this feature
-```
-
-### API Changes (if applicable)
-
-```
-METHOD /endpoint
-  Request:  { field: type }
-  Response: { field: type }
-  Errors:   [relevant error codes]
-```
-
-## 7. Non-Functional Requirements
-
-| Requirement | Target | How to Validate |
-|-------------|--------|----------------|
-| API latency | < 200ms p95 | Load test |
-| Test coverage | > 80% new code | Coverage command from `PROJECT.md` |
-| Accessibility | WCAG 2.1 AA | Axe audit |
-
-## 8. Implementation Phases
-
-Follow the phase ordering from `PROJECT.md`. Customize phases below for this feature.
-
-### Phase 1: [Name from PROJECT.md]
-
-1. [Tasks for this phase]
-2. [Write tests]
-
-**Validation**: Run validation command from `PROJECT.md`
-
-### Phase 2: [Name from PROJECT.md]
-
-1. [Tasks for this phase]
-2. [Write tests]
-
-**Validation**: Run validation command from `PROJECT.md`
-
-### Phase 3+: [Continue as needed]
-
-Add or remove phases based on the project's architecture (see `PROJECT.md`).
-
-## 9. Success Criteria
-
-### Functional
-- [ ] All acceptance criteria from user stories pass
-- [ ] All API endpoints return correct status codes
-- [ ] Error states handled and surfaced to user
-
-### Quality
-- [ ] Test coverage > 80% for new code
-- [ ] Type safety rules from `PROJECT.md` followed
-- [ ] All linting and type checks pass
-
-### User Experience
-- [ ] [Specific UX goals for this feature]
-
-## 10. Out of Scope
-
-- [Explicitly list what this PRD does NOT cover]
-- [Prevents scope creep during implementation]
-
-## 11. Boundaries
-
-### ALWAYS (agent can do freely)
-- Run tests, linters, type checks
-- Create/edit files within scope of this feature
-- Follow patterns from existing codebase
-
-### ASK FIRST (requires human approval)
-- Add new dependencies
-- Modify database schemas beyond what's specified above
-- Change shared interfaces
-
-### NEVER
-- Modify existing migration files
-- Commit secrets or credentials
-- Skip writing tests
-- Bypass type safety rules (see `PROJECT.md`)
-
-## 12. Risks & Mitigations
-
-| Risk | Impact | Mitigation |
-|------|--------|-----------|
-| [What could go wrong] | High/Med/Low | [Strategy] |
-
-## 13. Future Considerations
-
-- [Post-MVP enhancements]
-- [Integration opportunities]
-- [Advanced features for later phases]
-
-## 14. Validation Checklist
-
-- [ ] All acceptance criteria have passing tests
-- [ ] Validation command from `PROJECT.md` passes (tests, type check, lint)
-- [ ] Type safety rules from `PROJECT.md` followed
-- [ ] No secrets in code
-- [ ] Migration is reversible (if applicable)
-- [ ] Success criteria all met
+- design document  
+- technical specification  
+- related PRDs  
