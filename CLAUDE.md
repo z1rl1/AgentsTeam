@@ -63,6 +63,12 @@ Custom skills in `.claude/skills/`:
 - `/migrate [description]` -- Database/API migration workflow with rollback plan
 - `/tech-debt [area]` -- Identify and address technical debt
 
+### Self-Improvement (Karpathy Loop + Hooks)
+- `/generate-eval [skill-name]` -- Generate eval.json with binary assertions for a skill
+- `/self-improve [skill-name]` -- Run autonomous improvement loop on one skill (Karpathy pattern)
+- `/overnight [--target-score N]` -- Launch overnight improvement across ALL skills (sleep → wake up to better skills)
+- `/skill-health` -- Dashboard: quality scores, trends, and recommendations for all skills
+
 ### Session Management
 - `/pause` -- Save current work context to STATE.md for session continuity
 - `/resume` -- Restore context from STATE.md and continue where you left off
@@ -85,11 +91,20 @@ Custom skills in `.claude/skills/`:
 
 ```
 .claude/
-  agents/           -- Agent definitions (role, tools, model, system prompt)
-  skills/           -- Workflow skills and domain knowledge (SKILL.md format)
-  reference/        -- Tech-stack best practices (populated per project)
-  settings.json     -- Shared team settings (committed)
-  settings.local.json -- Personal settings (gitignored)
+  agents/              -- Agent definitions (role, tools, model, system prompt)
+  skills/              -- Workflow skills and domain knowledge (SKILL.md format)
+    [skill]/eval/      -- Eval files: eval.json, improvement-log.json, improvement-report.md
+  hooks/               -- Hook lifecycle scripts
+    lib/               -- Shared libraries (eval-engine.sh, metrics.sh, utils.sh)
+    logs/              -- Execution logs, eval results, session reports (JSONL + MD)
+    metrics/           -- Per-skill score history ([skill].jsonl)
+    pre-skill-check.sh   -- PreToolUse: pre-flight health check
+    log-skill-result.sh  -- PostToolUse: execution logging
+    post-skill-eval.sh   -- PostToolUse: assertion evaluation + metrics
+    session-report.sh    -- Stop: session health summary
+  reference/           -- Tech-stack best practices (populated per project)
+  settings.json        -- Shared team settings (committed, includes hooks config)
+  settings.local.json  -- Personal settings (gitignored)
 docs/
   prds/             -- Product Requirements Documents
   architecture/     -- Technical design documents and CONTEXT-*.md decision docs
@@ -204,6 +219,151 @@ docs/
 - Push to main/master directly
 - Bypass the project's type safety settings (see PROJECT.md)
 - Skip writing tests for new logic
+
+## Hooks System
+
+Automated lifecycle hooks for skill quality monitoring and self-improvement.
+Configured in `.claude/settings.json` under `hooks`. All scripts in `.claude/hooks/`.
+
+### Hook Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     HOOK LIFECYCLE                                    │
+│                                                                       │
+│  PreToolUse                PostToolUse                    Stop        │
+│  ┌──────────────┐         ┌──────────────────┐      ┌────────────┐  │
+│  │ pre-skill-   │         │ log-skill-       │      │ session-   │  │
+│  │ check.sh     │         │ result.sh        │      │ report.sh  │  │
+│  │              │         │                  │      │            │  │
+│  │ • Eval exist?│         │ • Log execution  │      │ • Daily    │  │
+│  │ • Last score │         │ • JSONL format   │      │   summary  │  │
+│  │ • Trend info │         │ • Response stats │      │ • Scores   │  │
+│  │ • Inject ctx │         └──────────────────┘      │ • Suggest  │  │
+│  └──────────────┘         ┌──────────────────┐      │   improve  │  │
+│                           │ post-skill-      │      └────────────┘  │
+│                           │ eval.sh          │                       │
+│                           │                  │                       │
+│                           │ • Run assertions │                       │
+│                           │ • Score output   │                       │
+│                           │ • Record metrics │                       │
+│                           │ • Suggest fixes  │                       │
+│                           └──────────────────┘                       │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Hook Event Map
+
+| Event | Script | Purpose | Timeout |
+|-------|--------|---------|---------|
+| `PreToolUse → Skill` | `pre-skill-check.sh` | Pre-flight: check eval exists, inject last score & trend | 10s |
+| `PostToolUse → Skill` | `log-skill-result.sh` | Log execution metadata (skill, args, response size) | 10s |
+| `PostToolUse → Skill` | `post-skill-eval.sh` | Evaluate output against binary assertions, record metrics | 30s |
+| `Stop` | `session-report.sh` | Generate session health summary with recommendations | 15s |
+
+### Shared Libraries (`.claude/hooks/lib/`)
+
+| Library | Purpose |
+|---------|---------|
+| `utils.sh` | Path resolution, JSON helpers, logging, skill detection |
+| `eval-engine.sh` | Binary assertion evaluation engine — programmatically checks word count, patterns, structure, headings, code blocks, forbidden content |
+| `metrics.sh` | Score tracking over time — record, query, trend analysis, aggregation across all skills |
+
+### Data Flow
+
+```
+Skill executes
+  │
+  ├─→ pre-skill-check.sh reads metrics/[skill].jsonl
+  │     └─→ injects {latest_score, trend, has_eval} into conversation
+  │
+  ├─→ log-skill-result.sh writes logs/skill-executions-YYYY-MM-DD.jsonl
+  │
+  ├─→ post-skill-eval.sh:
+  │     ├─→ reads skills/[skill]/eval/eval.json (assertions)
+  │     ├─→ runs eval-engine.sh against output
+  │     ├─→ writes metrics/[skill].jsonl (score entry)
+  │     ├─→ writes logs/eval-results-YYYY-MM-DD.jsonl
+  │     └─→ returns {score, failures, suggestion} to conversation
+  │
+  └─→ session-report.sh (on Stop):
+        ├─→ reads all metrics and logs
+        └─→ writes logs/session-report-DATE-SESSION.md
+```
+
+### Eval Engine Capabilities
+
+The eval engine (`lib/eval-engine.sh`) can programmatically check:
+
+- **Word count**: under/over N words
+- **Contains/not contains**: pattern matching (case-insensitive)
+- **Markdown structure**: headings (##, ###), bullet points, numbered lists
+- **Code blocks**: presence and count
+- **Line length**: max characters per line
+- **First/last line**: empty check, question mark check
+- **Numbers/statistics**: presence of numeric data
+- **Forbidden characters**: em-dashes, specific symbols
+- **Non-empty output**: basic sanity check
+
+Assertions that can't be evaluated programmatically are flagged as `needs_ai`
+and excluded from the automated score (handled by the AI in `/self-improve`).
+
+### Environment Variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `SKILL_EVAL_THRESHOLD` | `80` | Score below this triggers improvement suggestion |
+| `CLAUDE_PROJECT_DIR` | `.` | Project root (set by Claude Code) |
+
+## Skill Self-Improvement
+
+Autonomous skill quality improvement based on the Karpathy auto-research pattern.
+
+### Overview
+
+Two-layer system:
+1. **Passive monitoring** — hooks automatically evaluate every skill call and track metrics
+2. **Active improvement** — `/self-improve` runs the Karpathy loop to fix failing assertions
+
+### Workflow
+
+```
+/generate-eval [skill]     ← Step 1: Create eval.json with binary assertions
+                             (25-35 assertions across 5 test cases)
+
+[normal usage]             ← Step 2: Hooks passively evaluate and track scores
+                             (PostToolUse → post-skill-eval.sh)
+
+/skill-health              ← Step 3: Review dashboard, identify weak skills
+
+/self-improve [skill]      ← Step 4: Run autonomous improvement loop
+                             (Karpathy pattern: change → test → commit/revert → repeat)
+
+/skill-health              ← Step 5: Verify improvement
+```
+
+### Binary Assertions
+
+Assertions in `eval.json` must be **binary (true/false)**, not subjective:
+
+| Good (binary) | Bad (subjective) |
+|---------------|-----------------|
+| "Output contains heading ##" | "Output is well-structured" |
+| "Word count under 300" | "Appropriate length" |
+| "Does not end with question" | "Has good ending" |
+| "Contains at least 1 code block" | "Good code examples" |
+| "No em-dashes in output" | "Professional formatting" |
+
+### Skills
+
+- `/generate-eval [skill]` — Generate eval.json with binary assertions
+- `/self-improve [skill]` — Run the Karpathy improvement loop (autonomous, no human input needed)
+- `/skill-health` — Dashboard: scores, trends, recommendations for all skills
+
+### Two Layers of Improvement
+
+1. **Activation accuracy** — use Anthropic's built-in skill-creator for YAML description tuning
+2. **Output quality** — use `/self-improve` with binary assertions (Karpathy loop + hooks)
 
 ## Context Management
 

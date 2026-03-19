@@ -1,0 +1,56 @@
+{
+  "skill": "SKILL_NAME",
+  "version": 1,
+  "created": "YYYY-MM-DD",
+  "description": "Binary assertions for SKILL_NAME skill self-improvement",
+  "total_assertions": 0,
+  "tests": [
+    {
+      "name": "test_case_1_descriptive_name",
+      "prompt": "Realistic user prompt that triggers this skill",
+      "expected_output_description": "Brief description of what correct output looks like",
+      "assertions": [
+        {
+          "id": "T1_A1",
+          "text": "Output contains a markdown heading starting with ##",
+          "category": "structure"
+        },
+        {
+          "id": "T1_A2",
+          "text": "Total word count is under 500",
+          "category": "length"
+        },
+        {
+          "id": "T1_A3",
+          "text": "Output does not contain TODO or FIXME placeholders",
+          "category": "forbidden"
+        },
+        {
+          "id": "T1_A4",
+          "text": "Output includes at least one code block",
+          "category": "format"
+        },
+        {
+          "id": "T1_A5",
+          "text": "All steps are numbered sequentially",
+          "category": "process"
+        }
+      ]
+    }
+  ],
+  "_categories": {
+    "structure": "Output structure: headings, sections, ordering",
+    "content": "Required or expected content elements",
+    "format": "Formatting: markdown, code blocks, lists, tables",
+    "length": "Word count, line count, size constraints",
+    "forbidden": "Patterns that must NOT appear in output",
+    "process": "Correct ordering of steps, adherence to workflow"
+  },
+  "_assertion_rules": [
+    "Every assertion MUST be binary: answerable with true or false",
+    "No subjective judgments (good, compelling, professional)",
+    "Be specific and measurable (count words, check patterns)",
+    "Cover: structure, content, format, length, forbidden, process",
+    "5-7 assertions per test case, 5 test cases total = 25-35 assertions"
+  ]
+}
