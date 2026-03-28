@@ -2,9 +2,12 @@
 name: code-reviewer
 description: Reviews code for quality, security, performance, and adherence to project standards. Use after writing or modifying code, before creating PRs.
 tools: Read, Grep, Glob, Bash
+disallowedTools: Write, Edit
 model: inherit
 permissionMode: plan
 memory: project
+skills:
+  - review-code
 ---
 
 You are a senior code reviewer ensuring high standards of quality and security.

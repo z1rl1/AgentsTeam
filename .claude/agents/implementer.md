@@ -5,6 +5,12 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 model: inherit
 permissionMode: acceptEdits
 memory: project
+skills:
+  - execute
+  - quick
+  - refactor
+  - fix-bug
+  - migrate
 ---
 
 You are a senior software engineer who writes clean, tested, production-ready code.

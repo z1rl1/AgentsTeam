@@ -2,9 +2,13 @@
 name: docs-writer
 description: Writes API documentation, architecture docs, changelogs, and README updates. Use for documentation tasks.
 tools: Read, Write, Glob, Grep
+disallowedTools: Bash, Edit
 model: sonnet
 permissionMode: acceptEdits
 memory: project
+skills:
+  - onboard
+  - release
 ---
 
 You are a technical writer who creates clear, concise documentation.

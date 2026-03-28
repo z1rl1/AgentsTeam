@@ -14,17 +14,80 @@ roles handling requirements, architecture, implementation, testing, review, and 
 
 This project uses Claude Code sub-agents defined in `.claude/agents/`. Each agent has a
 specific role, tool access, and permission model. The team lead (your main Claude Code session)
-delegates to specialists:
+delegates to specialists.
 
-| Agent | Role | Model | When to Use |
-|-------|------|-------|-------------|
-| `product-manager` | PRDs, user stories, acceptance criteria | opus | Planning new features |
-| `architect` | System design, API contracts, data models | opus | Technical design decisions |
-| `implementer` | Code writing, feature implementation | inherit | Building features |
-| `code-reviewer` | Quality, security, performance review | inherit | After code changes |
-| `tester` | Test writing, coverage, validation | sonnet | Verifying acceptance criteria |
-| `debugger` | Root cause analysis, bug fixing | inherit | Investigating bugs |
-| `docs-writer` | API docs, architecture docs, changelogs | sonnet | Documentation tasks |
+### How Subagents Work
+
+Subagents are **isolated instances** with their own context window. Key principles:
+
+1. **Context isolation** — each subagent gets a clean context, not polluted by the parent's history
+2. **Automatic selection** — the parent agent picks the right subagent based on `description`
+3. **One task, one lifecycle** — subagent is created, executes its task, returns a summary, and is destroyed
+4. **Economy** — only `name` and `description` are loaded into the parent's context; full instructions stay in the subagent
+5. **Model flexibility** — expensive models (opus) for complex reasoning, cheap models (sonnet) for routine tasks
+
+### Core Team (Development Workflow)
+
+| Agent | Role | Model | Mode | Skills | Denied Tools |
+|-------|------|-------|------|--------|-------------|
+| `product-manager` | PRDs, user stories, acceptance criteria | opus | plan | new-feature, discuss, bootstrap | Edit, Bash |
+| `architect` | System design, API contracts, data models | opus | plan | plan | Edit |
+| `implementer` | Code writing, feature implementation | inherit | acceptEdits | execute, quick, refactor, fix-bug, migrate | — |
+| `code-reviewer` | Quality, performance, standards review | inherit | plan | review-code | Write, Edit |
+| `tester` | Test writing, coverage, validation | sonnet | acceptEdits | e2e-test, validate, verify | — |
+| `debugger` | Root cause analysis, bug investigation | inherit | plan | fix-bug, rca | Write, Edit |
+| `docs-writer` | API docs, architecture docs, changelogs | sonnet | acceptEdits | onboard, release | Bash, Edit |
+
+### Utility Agents (Specialized Tasks)
+
+| Agent | Role | Model | Mode | Skills | Denied Tools |
+|-------|------|-------|------|--------|-------------|
+| `researcher` | Web/codebase search, information gathering | sonnet | plan | prime, onboard | Write, Edit, Bash |
+| `security-reviewer` | OWASP Top 10, secrets, injection, auth audit | inherit | plan | security-audit | Write, Edit |
+| `devops` | Docker, CI/CD, deployment, infrastructure | inherit | plan | update-deps, migrate, release | WebSearch, WebFetch |
+| `performance-analyst` | Profiling, bottleneck identification | sonnet | plan | perf | Write, Edit |
+
+### Agent Interaction Map
+
+```
+                    ┌─────────────────┐
+                    │   Team Lead     │
+                    │ (main session)  │
+                    └────────┬────────┘
+                             │ delegates
+            ┌────────────────┼────────────────┐
+            │                │                │
+     ┌──────▼──────┐  ┌─────▼──────┐  ┌──────▼──────┐
+     │   product-   │  │  architect  │  │  researcher  │
+     │   manager    │  │            │  │  (isolated)  │
+     │  (PRD)       │  │ (design)   │  │  (web/code)  │
+     └──────┬──────┘  └─────┬──────┘  └─────────────┘
+            │               │
+            ▼               ▼
+     ┌─────────────────────────────┐
+     │       implementer           │
+     │  (code, per-phase fresh)    │
+     └──────────┬──────────────────┘
+                │
+       ┌────────┼────────┐
+       │        │        │
+  ┌────▼───┐ ┌──▼───┐ ┌──▼──────────┐
+  │ tester │ │ code-│ │ security-   │
+  │        │ │review│ │ reviewer    │
+  └────────┘ └──────┘ └─────────────┘
+                │
+          ┌─────▼──────┐
+          │ docs-writer │
+          └────────────┘
+```
+
+### Permission Modes Explained
+
+| Mode | Can Read | Can Edit | Can Execute | Use Case |
+|------|----------|----------|-------------|----------|
+| `plan` | Yes | No | Limited | Review, design, investigation — propose only |
+| `acceptEdits` | Yes | Yes | Yes | Implementation, testing, documentation |
+| `default` | Yes | Ask | Ask | Research, general tasks |
 
 ## Workflow Skills
 
@@ -375,3 +438,114 @@ Assertions in `eval.json` must be **binary (true/false)**, not subjective:
   agents for new hypotheses
 - If you notice quality degradation (repetition, confusion, rushed output), save
   state with `/pause` and start a fresh session with `/resume`
+
+## Subagent Architecture
+
+### Design Principles
+
+1. **Context isolation is the primary value** — subagents protect the parent's context
+   window from noise. A researcher agent fetches 50 web pages but returns 200 words.
+2. **One task per subagent** — created, executes, returns summary, destroyed. No reuse.
+3. **Fresh eyes catch more** — code-reviewer and security-reviewer work better with
+   clean context because they see the code without development assumptions.
+4. **Model economy** — use sonnet for routine tasks (research, testing, docs),
+   opus for complex reasoning (PRD, architecture), inherit for tasks that need
+   the same capability as the parent.
+5. **Parallel where possible** — code-reviewer + security-reviewer + tester can
+   run in parallel during `/review-code` since they don't depend on each other.
+
+### Agent Definition Format
+
+Each agent is a Markdown file in `.claude/agents/` with YAML frontmatter:
+
+```yaml
+---
+name: agent-name           # Unique identifier, used in Agent() calls
+description: ...           # What it does — ONLY this is visible to parent agent
+tools: Read, Glob, ...     # Which tools this agent can use
+disallowedTools: Write, Edit  # Tools explicitly DENIED (safety boundary)
+model: opus|sonnet|inherit # LLM model to use
+permissionMode: plan|acceptEdits|default  # What actions are allowed
+memory: project            # Memory scope
+skills:                    # Skills this agent can invoke
+  - review-code
+  - security-audit
+---
+```
+
+**Key fields:**
+- `tools` — whitelist of tools the agent CAN use
+- `disallowedTools` — explicit blacklist of tools the agent MUST NOT use (overrides tools)
+- `skills` — list of project skills (from `.claude/skills/`) the agent can invoke
+- `permissionMode` — controls whether the agent can write files or only propose
+
+The body contains the system prompt: role, process, output format, rules, and
+coordination notes explaining how this agent interacts with others.
+
+### Agent Capabilities Matrix
+
+| Agent | skills | disallowedTools | Rationale |
+|-------|--------|-----------------|-----------|
+| `product-manager` | new-feature, discuss, bootstrap | Edit, Bash | Creates PRDs, no code editing needed |
+| `architect` | plan | Edit | Designs systems, writes docs, no code editing |
+| `implementer` | execute, quick, refactor, fix-bug, migrate | — | Full access needed for implementation |
+| `code-reviewer` | review-code | Write, Edit | Reviews only, must not modify code |
+| `tester` | e2e-test, validate, verify | — | Needs Write/Edit to create test files |
+| `debugger` | fix-bug, rca | Write, Edit | Investigates only, proposes fixes without applying |
+| `docs-writer` | onboard, release | Bash, Edit | Writes docs with Write, no shell or inline edits |
+| `researcher` | prime, onboard | Write, Edit, Bash | Read-only research, no modifications |
+| `security-reviewer` | security-audit | Write, Edit | Audits only, must not change code |
+| `performance-analyst` | perf | Write, Edit | Analyzes only, does not apply optimizations |
+| `devops` | update-deps, migrate, release | WebSearch, WebFetch | Infrastructure tasks, no web browsing |
+
+### When to Use Which Agent
+
+| Situation | Agent | Why |
+|-----------|-------|-----|
+| Need info from the web | `researcher` | Isolates web noise from your context |
+| Planning a new feature | `product-manager` | Creates structured, agent-executable PRDs |
+| Designing architecture | `architect` | Technical decisions, API contracts |
+| Writing code | `implementer` | Per-phase, fresh context each time |
+| Code changes need review | `code-reviewer` | Clean eyes, unbiased perspective |
+| Security concerns | `security-reviewer` | Dedicated OWASP checklist |
+| Tests needed | `tester` | Maps PRD criteria to test cases |
+| Something is broken | `debugger` | Methodical RCA, proposes fixes |
+| Need documentation | `docs-writer` | API docs, changelogs, READMEs |
+| Deployment tasks | `devops` | Docker, CI/CD, server config |
+| Performance issues | `performance-analyst` | Profiling, bottleneck analysis |
+
+### Subagent Communication Pattern
+
+```
+Parent Agent                    Subagent
+     │                              │
+     │  1. Create with task prompt  │
+     ├─────────────────────────────►│
+     │                              │
+     │     (subagent reads files,   │
+     │      searches, analyzes —    │
+     │      all in isolated ctx)    │
+     │                              │
+     │  2. Return concise summary   │
+     │◄─────────────────────────────┤
+     │                              │
+     │  3. Subagent destroyed       │
+     │                              ✕
+     │
+     │  Parent continues with
+     │  clean context + summary
+```
+
+### Key Differences: Subagents vs Agent Teams
+
+| Aspect | Subagents | Agent Teams |
+|--------|-----------|-------------|
+| Context | Isolated, one-way | Shared scratchpad |
+| Communication | Only with parent | Between each other |
+| Lifecycle | Single task, then destroyed | Persist during project |
+| Capability | Defined subset of tools | Full Claude Code capability |
+| Model | Can be cheaper (sonnet) | Each has own model |
+| Best for | Focused tasks, context isolation | Complex multi-role collaboration |
+
+This project primarily uses **subagents** for the development workflow, with
+`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` enabled for future team capabilities.

@@ -5,6 +5,10 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 model: sonnet
 permissionMode: acceptEdits
 memory: project
+skills:
+  - e2e-test
+  - validate
+  - verify
 ---
 
 You are a QA engineer obsessed with finding bugs and ensuring correctness.
