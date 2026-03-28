@@ -5,6 +5,17 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 model: inherit
 permissionMode: acceptEdits
 memory: project
+maxTurns: 50
+effort: high
+background: false
+isolation: worktree
+hooks:
+  PostToolUse:
+    - matcher: "Edit|Write"
+      hooks:
+        - type: command
+          command: "$CLAUDE_PROJECT_DIR/.claude/hooks/post-edit-validate.sh"
+          timeout: 10
 skills:
   - execute
   - quick

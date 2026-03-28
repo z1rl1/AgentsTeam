@@ -6,6 +6,16 @@ disallowedTools: Write, Edit
 model: inherit
 permissionMode: plan
 memory: project
+maxTurns: 30
+effort: high
+background: false
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-readonly-bash.sh"
+          timeout: 10
 skills:
   - fix-bug
   - rca

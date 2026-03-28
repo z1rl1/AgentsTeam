@@ -28,24 +28,24 @@ Subagents are **isolated instances** with their own context window. Key principl
 
 ### Core Team (Development Workflow)
 
-| Agent | Role | Model | Mode | Skills | Denied Tools |
-|-------|------|-------|------|--------|-------------|
-| `product-manager` | PRDs, user stories, acceptance criteria | opus | plan | new-feature, discuss, bootstrap | Edit, Bash |
-| `architect` | System design, API contracts, data models | opus | plan | plan | Edit |
-| `implementer` | Code writing, feature implementation | inherit | acceptEdits | execute, quick, refactor, fix-bug, migrate | — |
-| `code-reviewer` | Quality, performance, standards review | inherit | plan | review-code | Write, Edit |
-| `tester` | Test writing, coverage, validation | sonnet | acceptEdits | e2e-test, validate, verify | — |
-| `debugger` | Root cause analysis, bug investigation | inherit | plan | fix-bug, rca | Write, Edit |
-| `docs-writer` | API docs, architecture docs, changelogs | sonnet | acceptEdits | onboard, release | Bash, Edit |
+| Agent | Role | Model | Mode | Skills | Denied Tools | maxTurns | Effort | Background | Isolation |
+|-------|------|-------|------|--------|-------------|----------|--------|------------|-----------|
+| `product-manager` | PRDs, user stories, acceptance criteria | opus | plan | new-feature, discuss, bootstrap | Edit, Bash | 30 | high | no | — |
+| `architect` | System design, API contracts, data models | opus | plan | plan | Edit | 30 | high | no | — |
+| `implementer` | Code writing, feature implementation | inherit | acceptEdits | execute, quick, refactor, fix-bug, migrate | — | 50 | high | no | worktree |
+| `code-reviewer` | Quality, performance, standards review | inherit | plan | review-code | Write, Edit | 20 | high | yes | — |
+| `tester` | Test writing, coverage, validation | sonnet | acceptEdits | e2e-test, validate, verify | — | 40 | medium | no | — |
+| `debugger` | Root cause analysis, bug investigation | inherit | plan | fix-bug, rca | Write, Edit | 30 | high | no | — |
+| `docs-writer` | API docs, architecture docs, changelogs | sonnet | acceptEdits | onboard, release | Bash, Edit | 20 | medium | yes | — |
 
 ### Utility Agents (Specialized Tasks)
 
-| Agent | Role | Model | Mode | Skills | Denied Tools |
-|-------|------|-------|------|--------|-------------|
-| `researcher` | Web/codebase search, information gathering | sonnet | plan | prime, onboard | Write, Edit, Bash |
-| `security-reviewer` | OWASP Top 10, secrets, injection, auth audit | inherit | plan | security-audit | Write, Edit |
-| `devops` | Docker, CI/CD, deployment, infrastructure | inherit | plan | update-deps, migrate, release | WebSearch, WebFetch |
-| `performance-analyst` | Profiling, bottleneck identification | sonnet | plan | perf | Write, Edit |
+| Agent | Role | Model | Mode | Skills | Denied Tools | maxTurns | Effort | Background | Memory |
+|-------|------|-------|------|--------|-------------|----------|--------|------------|--------|
+| `researcher` | Web/codebase search, information gathering | sonnet | plan | prime, onboard | Write, Edit, Bash | 15 | medium | yes | user |
+| `security-reviewer` | OWASP Top 10, secrets, injection, auth audit | inherit | plan | security-audit | Write, Edit | 25 | high | yes | project |
+| `devops` | Docker, CI/CD, deployment, infrastructure | inherit | plan | update-deps, migrate, release | WebSearch, WebFetch | 30 | medium | no | project |
+| `performance-analyst` | Profiling, bottleneck identification | sonnet | plan | perf | Write, Edit | 20 | medium | yes | project |
 
 ### Agent Interaction Map
 
@@ -317,12 +317,35 @@ Configured in `.claude/settings.json` under `hooks`. All scripts in `.claude/hoo
 
 ### Hook Event Map
 
+#### Project-Level Hooks (settings.json — always active)
+
 | Event | Script | Purpose | Timeout |
 |-------|--------|---------|---------|
 | `PreToolUse → Skill` | `pre-skill-check.sh` | Pre-flight: check eval exists, inject last score & trend | 10s |
 | `PostToolUse → Skill` | `log-skill-result.sh` | Log execution metadata (skill, args, response size) | 10s |
 | `PostToolUse → Skill` | `post-skill-eval.sh` | Evaluate output against binary assertions, record metrics | 30s |
 | `Stop` | `session-report.sh` | Generate session health summary with recommendations | 15s |
+
+#### Agent-Level Hooks (frontmatter — active only while agent runs)
+
+| Agent | Event | Script | Purpose | Timeout |
+|-------|-------|--------|---------|---------|
+| `code-reviewer` | `PreToolUse → Bash` | `validate-readonly-bash.sh` | Block destructive commands | 10s |
+| `security-reviewer` | `PreToolUse → Bash` | `validate-readonly-bash.sh` | Block destructive commands | 10s |
+| `debugger` | `PreToolUse → Bash` | `validate-readonly-bash.sh` | Block destructive commands | 10s |
+| `performance-analyst` | `PreToolUse → Bash` | `validate-readonly-bash.sh` | Block destructive commands | 10s |
+| `implementer` | `PostToolUse → Edit\|Write` | `post-edit-validate.sh` | Log edits, remind to validate | 10s |
+| `tester` | `PostToolUse → Bash` | `log-test-result.sh` | Log test execution results | 10s |
+| `devops` | `PreToolUse → Bash` | `validate-devops-bash.sh` | Block dangerous production ops | 10s |
+
+#### Hook Scripts for Agents
+
+| Script | Type | Used by | What it does |
+|--------|------|---------|-------------|
+| `validate-readonly-bash.sh` | PreToolUse | code-reviewer, security-reviewer, debugger, performance-analyst | Blocks `rm`, `git push`, `npm install`, file redirects — enforces read-only |
+| `post-edit-validate.sh` | PostToolUse | implementer | Logs file edits, reminds to run validation |
+| `log-test-result.sh` | PostToolUse | tester | Detects test commands, logs pass/fail results |
+| `validate-devops-bash.sh` | PreToolUse | devops | Blocks `kubectl delete`, `docker prune`, force push, `DROP DATABASE` |
 
 ### Shared Libraries (`.claude/hooks/lib/`)
 
@@ -466,8 +489,12 @@ tools: Read, Glob, ...     # Which tools this agent can use
 disallowedTools: Write, Edit  # Tools explicitly DENIED (safety boundary)
 model: opus|sonnet|inherit # LLM model to use
 permissionMode: plan|acceptEdits|default  # What actions are allowed
-memory: project            # Memory scope
-skills:                    # Skills this agent can invoke
+memory: user|project|local # Persistent memory scope (cross-session learning)
+maxTurns: 30               # Max agentic turns (prevents infinite loops)
+effort: high               # Reasoning effort: low|medium|high
+background: false          # Run in background (true) or foreground (false)
+isolation: worktree        # Git worktree isolation for safe parallel work
+skills:                    # Skills injected into subagent context at startup
   - review-code
   - security-audit
 ---
@@ -476,27 +503,32 @@ skills:                    # Skills this agent can invoke
 **Key fields:**
 - `tools` — whitelist of tools the agent CAN use
 - `disallowedTools` — explicit blacklist of tools the agent MUST NOT use (overrides tools)
-- `skills` — list of project skills (from `.claude/skills/`) the agent can invoke
+- `skills` — list of project skills (from `.claude/skills/`) injected into context at startup
 - `permissionMode` — controls whether the agent can write files or only propose
+- `maxTurns` — safety limit to prevent runaway agents
+- `effort` — controls reasoning depth (high for complex tasks, medium for routine)
+- `background` — true = runs concurrently while main conversation continues
+- `isolation` — `worktree` gives the agent an isolated git copy for safe changes
+- `memory` — `user` (all projects), `project` (shared via git), `local` (gitignored)
 
 The body contains the system prompt: role, process, output format, rules, and
 coordination notes explaining how this agent interacts with others.
 
 ### Agent Capabilities Matrix
 
-| Agent | skills | disallowedTools | Rationale |
-|-------|--------|-----------------|-----------|
-| `product-manager` | new-feature, discuss, bootstrap | Edit, Bash | Creates PRDs, no code editing needed |
-| `architect` | plan | Edit | Designs systems, writes docs, no code editing |
-| `implementer` | execute, quick, refactor, fix-bug, migrate | — | Full access needed for implementation |
-| `code-reviewer` | review-code | Write, Edit | Reviews only, must not modify code |
-| `tester` | e2e-test, validate, verify | — | Needs Write/Edit to create test files |
-| `debugger` | fix-bug, rca | Write, Edit | Investigates only, proposes fixes without applying |
-| `docs-writer` | onboard, release | Bash, Edit | Writes docs with Write, no shell or inline edits |
-| `researcher` | prime, onboard | Write, Edit, Bash | Read-only research, no modifications |
-| `security-reviewer` | security-audit | Write, Edit | Audits only, must not change code |
-| `performance-analyst` | perf | Write, Edit | Analyzes only, does not apply optimizations |
-| `devops` | update-deps, migrate, release | WebSearch, WebFetch | Infrastructure tasks, no web browsing |
+| Agent | skills | disallowedTools | maxTurns | effort | background | isolation | Rationale |
+|-------|--------|-----------------|----------|--------|------------|-----------|-----------|
+| `product-manager` | new-feature, discuss, bootstrap | Edit, Bash | 30 | high | no | — | Creates PRDs, no code editing needed |
+| `architect` | plan | Edit | 30 | high | no | — | Designs systems, writes docs, no code editing |
+| `implementer` | execute, quick, refactor, fix-bug, migrate | — | 50 | high | no | worktree | Full access, isolated git copy for safe changes |
+| `code-reviewer` | review-code | Write, Edit | 20 | high | yes | — | Reviews in background, must not modify code |
+| `tester` | e2e-test, validate, verify | — | 40 | medium | no | — | Needs Write/Edit to create test files |
+| `debugger` | fix-bug, rca | Write, Edit | 30 | high | no | — | Investigates only, proposes fixes without applying |
+| `docs-writer` | onboard, release | Bash, Edit | 20 | medium | yes | — | Writes docs in background, no shell needed |
+| `researcher` | prime, onboard | Write, Edit, Bash | 15 | medium | yes | — | Read-only research, runs in background |
+| `security-reviewer` | security-audit | Write, Edit | 25 | high | yes | — | Audits in background, must not change code |
+| `performance-analyst` | perf | Write, Edit | 20 | medium | yes | — | Analyzes in background, does not apply optimizations |
+| `devops` | update-deps, migrate, release | WebSearch, WebFetch | 30 | medium | no | — | Infrastructure tasks, needs human approval |
 
 ### When to Use Which Agent
 

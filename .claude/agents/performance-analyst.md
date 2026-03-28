@@ -6,6 +6,16 @@ disallowedTools: Write, Edit
 model: sonnet
 permissionMode: plan
 memory: project
+maxTurns: 20
+effort: medium
+background: true
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-readonly-bash.sh"
+          timeout: 10
 skills:
   - perf
 ---

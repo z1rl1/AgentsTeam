@@ -6,6 +6,16 @@ disallowedTools: WebSearch, WebFetch
 model: inherit
 permissionMode: plan
 memory: project
+maxTurns: 30
+effort: medium
+background: false
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-devops-bash.sh"
+          timeout: 10
 skills:
   - update-deps
   - migrate

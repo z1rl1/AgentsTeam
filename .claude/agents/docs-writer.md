@@ -6,6 +6,9 @@ disallowedTools: Bash, Edit
 model: sonnet
 permissionMode: acceptEdits
 memory: project
+maxTurns: 20
+effort: medium
+background: true
 skills:
   - onboard
   - release

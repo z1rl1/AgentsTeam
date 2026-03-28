@@ -6,6 +6,9 @@ disallowedTools: Edit, Bash
 model: opus
 permissionMode: plan
 memory: project
+maxTurns: 30
+effort: high
+background: false
 skills:
   - new-feature
   - discuss

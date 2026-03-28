@@ -5,6 +5,16 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 model: sonnet
 permissionMode: acceptEdits
 memory: project
+maxTurns: 40
+effort: medium
+background: false
+hooks:
+  PostToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "$CLAUDE_PROJECT_DIR/.claude/hooks/log-test-result.sh"
+          timeout: 10
 skills:
   - e2e-test
   - validate

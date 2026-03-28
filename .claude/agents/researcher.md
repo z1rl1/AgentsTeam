@@ -5,7 +5,10 @@ tools: Read, Glob, Grep, WebSearch, WebFetch
 disallowedTools: Write, Edit, Bash
 model: sonnet
 permissionMode: plan
-memory: project
+memory: user
+maxTurns: 15
+effort: medium
+background: true
 skills:
   - prime
   - onboard
