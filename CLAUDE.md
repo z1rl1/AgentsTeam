@@ -1,86 +1,146 @@
-# GameForge — AI HTML5 Game Generator for VK
+# CLAUDE.md — GameForge
 
-> OpenClaw agent workspace. Generates any HTML5 game on demand via VK messages using LLM API.
+> **Для разработчика**: обзор архитектуры, структура файлов, как всё устроено.
+> **Для агента (OpenClaw runtime)**: читай `SOUL.md` — там все инструкции.
 
-## Agent Identity
+## Что такое GameForge
 
-**Name**: GameForge (Игрокузница)
-**Platform**: VK via OpenClaw 2026
-**Core skill**: Generate → Deploy → Send link — all in one message
+AI-агент в VK: пользователь пишет "сделай змейку" → агент генерирует HTML5 игру через LLM → деплоит на surge.sh → отвечает живой ссылкой. Всё за < 60 секунд.
 
-## Architecture
+**Платформа**: OpenClaw 2026 (агентовый шлюз к VK User Long Poll)
+**LLM**: MiniMax M1 (prod) / OpenRouter (fallback)
+**Деплой**: surge.sh (статический хостинг)
+
+## Архитектура
 
 ```
-VK User message
-      │
-      ▼
- GameForge Agent (SOUL.md)
-      │
-      ├── rate-limiter        check cooldown (60s per user)
-      ├── game-library        search catalog (skip generation if exists)
-      ├── user-memory         load user preferences
-      │
-      ├── game-designer       plan: slug, theme, mechanics (JSON)
-      │
-      ├── game-coder          write HTML5/JS (acceptEdits)
-      ├── game-asset-designer CSS/SVG snippets (parallel)
-      ├── game-audio-designer Web Audio API (parallel)
-      │
-      ├── game-tester         QA: READY/ISSUES/BROKEN verdict
-      ├── game-deployer       deploy to surge.sh, return URL
-      │
-      ├── observability       log tokens + cost
-      └── prompt-optimizer    record score, improve prompt
+VK сообщение
+     │
+     ▼
+GameForge (SOUL.md — главные инструкции агента)
+     │
+     ├── rate-limiter      ← 60с cooldown на пользователя
+     ├── game-library      ← поиск в каталоге (не генерируем повторно)
+     ├── user-memory       ← предпочтения пользователя (feedback)
+     │
+     ├── [простая игра] → пишет код сам → deploy.sh → VK
+     │
+     └── [сложная игра]:
+          game-designer (план JSON)
+               │
+          ┌────┼────┐ параллельно
+          │    │    │
+       game  asset audio
+       coder design design
+          │
+       game-tester (QA: READY/ISSUES/BROKEN)
+          │
+       game-deployer (surge.sh → URL → VK)
+          │
+       observability + prompt-optimizer
 ```
 
-## Key Files
+## Субагенты
 
-| File | Purpose |
-|------|---------|
-| `SOUL.md` | Agent identity, personality, core instructions |
-| `AGENTS.md` | Registry of all 6 subagents |
-| `agents/` | Subagent definitions (role, tools, mode) |
-| `skills/` | 40+ skills with SKILL.md + eval.json + scripts/ |
-| `hooks/` | Lifecycle hooks (pre-check, post-eval, session-report) |
-| `docs/PRD-gameforge.md` | Full Agentic PRD with GIVEN-WHEN-THEN |
-| `setup/` | One-time installation scripts |
+| Агент | Роль | Mode | Файл |
+|-------|------|------|------|
+| `game-designer` | Планирует механику → JSON | plan | agents/game-designer.md |
+| `game-coder` | Пишет HTML5/JS игру | acceptEdits | agents/game-coder.md |
+| `game-asset-designer` | CSS/SVG ассеты (параллельно) | plan | agents/game-asset-designer.md |
+| `game-audio-designer` | Web Audio API (параллельно) | plan | agents/game-audio-designer.md |
+| `game-tester` | QA проверка перед деплоем | plan | agents/game-tester.md |
+| `game-deployer` | Деплой на surge.sh → VK | acceptEdits | agents/game-deployer.md |
 
-## Subagents
+## Структура файлов
 
-| Agent | Role | Mode |
-|-------|------|------|
-| `game-designer` | Plan: slug, theme, mechanics | plan |
-| `game-coder` | Write complete HTML5/JS game | acceptEdits |
-| `game-asset-designer` | CSS/SVG visual assets (parallel) | plan |
-| `game-audio-designer` | Web Audio API sounds (parallel) | plan |
-| `game-tester` | QA check: READY/ISSUES/BROKEN | plan |
-| `game-deployer` | Deploy to surge.sh, return link | acceptEdits |
+```
+gameforge workspace/
+├── SOUL.md              ← главный файл агента (читает OpenClaw)
+├── CLAUDE.md            ← этот файл (читает разработчик / Claude Code)
+│
+├── agents/              ← определения субагентов
+│   ├── game-designer.md
+│   ├── game-coder.md
+│   ├── game-asset-designer.md
+│   ├── game-audio-designer.md
+│   ├── game-tester.md
+│   └── game-deployer.md
+│
+├── skills/              ← 40+ скиллов
+│   └── [skill-name]/
+│       ├── SKILL.md     ← инструкции скилла
+│       ├── scripts/     ← Python скрипты
+│       └── eval/
+│           └── eval.json ← бинарные assertions для self-improve
+│
+├── hooks/               ← lifecycle хуки (автоматические)
+│   ├── pre-skill-check.sh    ← перед скиллом: проверяет eval, инжектит score
+│   ├── post-skill-eval.sh    ← после скилла: оценивает output, пишет метрики
+│   ├── session-report.sh     ← при стопе: итоговый отчёт сессии
+│   └── lib/
+│       ├── eval-engine.sh    ← движок бинарных assertions
+│       └── metrics.sh        ← трекинг scores по времени
+│
+├── docs/
+│   └── PRD-gameforge.md ← полный Agentic PRD (GIVEN-WHEN-THEN)
+│
+└── setup/               ← одноразовые скрипты установки
+    ├── setup_api.py     ← тестирует free модели, сохраняет рабочую
+    └── save_config.py   ← записывает ключ и модель в openclaw.json
+```
 
-## LLM Integration
+## Ключевые скиллы
 
-- **Primary**: MiniMax M1 (paid, production)
-- **Fallback**: OpenRouter free models
-- **Working free model**: `nvidia/nemotron-3-super-120b-a12b:free`
-- Config: `skills/game-generator/scripts/generate_game.py`
+| Скилл | Что делает |
+|-------|-----------|
+| `game-generator` | Основной: LLM генерирует HTML5 игру |
+| `game-playtester` | QA: 7 чеков (canvas, gameloop, score, controls...) |
+| `rate-limiter` | 60с cooldown + max 5 concurrent |
+| `game-library` | Каталог игр, поиск по тегам |
+| `user-memory` | Предпочтения пользователя |
+| `feedback` | Детектирует негатив → сохраняет constraints |
+| `prompt-optimizer` | Karpathy loop: scores → улучшает промпт |
+| `observability` | Логирует токены + стоимость |
+| `self-improve` | Автономное улучшение всех скиллов |
 
 ## Self-Improvement (Karpathy Loop)
 
-Runs automatically via hooks:
-
 ```
-PostToolUse -> post-skill-eval.sh -> scores output -> records to hooks/metrics/
-/self-improve [skill] -> reads failures -> fixes SKILL.md -> re-evals
+Каждый запуск скилла:
+  PostToolUse → post-skill-eval.sh
+    → читает skills/*/eval/eval.json
+    → проверяет assertions против output
+    → пишет score в hooks/metrics/{skill}.jsonl
+    → если score < 80% → предлагает улучшения
+
+Ручной запуск:
+  python3 skills/self-improve/scripts/self_improve.py status
+  python3 skills/self-improve/scripts/self_improve.py all
+  python3 skills/self-improve/scripts/self_improve.py game-generator
 ```
 
-All 40+ skills have binary assertions in `skills/*/eval/eval.json`.
+## LLM конфигурация
 
-## Setup
+- **Prod**: MiniMax M1 (`MINIMAX_API_KEY`)
+- **Fallback**: OpenRouter (`OPENROUTER_API_KEY`)
+- **Рабочая free модель**: `nvidia/nemotron-3-super-120b-a12b:free`
+- **Конфиг**: `skills/game-generator/scripts/generate_game.py`
+
+## Установка
 
 ```bash
-# 1. Install OpenClaw
-# 2. Copy this workspace to /root/.openclaw/workspace/
-# 3. Set API keys
-python3 setup/setup_api.py    # finds working free model
-python3 setup/save_config.py  # saves to openclaw.json
-# 4. Start OpenClaw and connect to VK
+# Скопировать workspace на сервер
+cp -r . /root/.openclaw/workspace/
+
+# Настроить API ключи
+python3 setup/setup_api.py    # тест free моделей → сохраняет рабочую
+python3 setup/save_config.py  # записывает в openclaw.json
+
+# Запустить OpenClaw
+cd /root/.openclaw && npm start
 ```
+
+## PRD
+
+Полный Product Requirements Document с GIVEN-WHEN-THEN сценариями:
+`docs/PRD-gameforge.md`
