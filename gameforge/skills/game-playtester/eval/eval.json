@@ -1,0 +1,56 @@
+{
+  "skill": "game-playtester",
+  "version": "2.0",
+  "description": "Tests HTML5 game quality via static code analysis",
+  "assertions": [
+    {
+      "id": "non_empty",
+      "type": "non_empty",
+      "description": "Output not empty"
+    },
+    {
+      "id": "no_error",
+      "type": "not_contains",
+      "pattern": "Traceback|SyntaxError",
+      "description": "No Python errors"
+    },
+    {
+      "id": "has_test_result",
+      "type": "contains",
+      "pattern": "READY|ISSUES|BROKEN|OK|FAIL|WARN",
+      "description": "Shows test result status"
+    },
+    {
+      "id": "has_score",
+      "type": "contains",
+      "pattern": "\\d+/\\d+|\\d+%|score|Score",
+      "description": "Shows numeric score"
+    },
+    {
+      "id": "has_checks",
+      "type": "contains",
+      "pattern": "canvas|game.?loop|score|start",
+      "description": "Lists game checks",
+      "case_insensitive": true
+    },
+    {
+      "id": "has_separator",
+      "type": "contains",
+      "pattern": "={3,}|-{3,}",
+      "description": "Has formatted separator"
+    },
+    {
+      "id": "min_lines",
+      "type": "min_lines",
+      "min": 5,
+      "description": "At least 5 lines output"
+    },
+    {
+      "id": "no_traceback",
+      "type": "not_contains",
+      "pattern": "traceback",
+      "description": "No stack traces",
+      "case_insensitive": true
+    }
+  ]
+}

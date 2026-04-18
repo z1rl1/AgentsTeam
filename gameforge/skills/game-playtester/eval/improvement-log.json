@@ -1,0 +1,27 @@
+{
+  "skill": "game-playtester",
+  "runs": [
+    {
+      "date": "2026-04-16T23:45:52.535779",
+      "round": 1,
+      "score_before": 50,
+      "score_after": 50,
+      "delta": 0,
+      "fixes": [
+        "Add example output containing: surge.sh",
+        "Add example output containing: OK|ready|готова"
+      ]
+    },
+    {
+      "date": "2026-04-16T23:45:52.563156",
+      "round": 2,
+      "score_before": 50,
+      "score_after": 50,
+      "delta": 0,
+      "fixes": [
+        "Add example output containing: surge.sh",
+        "Add example output containing: OK|ready|готова"
+      ]
+    }
+  ]
+}

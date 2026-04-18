@@ -1,0 +1,42 @@
+{
+  "skill": "observability",
+  "version": "2.0",
+  "description": "Token usage and cost tracking",
+  "assertions": [
+    {
+      "id": "non_empty",
+      "type": "non_empty",
+      "description": "Output not empty"
+    },
+    {
+      "id": "no_error",
+      "type": "not_contains",
+      "pattern": "Traceback|SyntaxError",
+      "description": "No Python errors"
+    },
+    {
+      "id": "has_label",
+      "type": "contains",
+      "pattern": "Today|Week|today|week|Observability|data|Data|No data",
+      "description": "Has time label or status"
+    },
+    {
+      "id": "no_traceback",
+      "type": "not_contains",
+      "pattern": "traceback",
+      "description": "No stack traces",
+      "case_insensitive": true
+    },
+    {
+      "id": "min_words",
+      "type": "min_words",
+      "min": 2,
+      "description": "At least 2 words"
+    },
+    {
+      "id": "ends_no_question",
+      "type": "ends_no_question",
+      "description": "Ends with statement"
+    }
+  ]
+}

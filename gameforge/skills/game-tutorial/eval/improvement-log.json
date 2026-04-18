@@ -1,0 +1,16 @@
+{
+  "skill": "game-tutorial",
+  "runs": [
+    {
+      "date": "2026-04-16T23:45:52.595608",
+      "round": 1,
+      "score_before": 50,
+      "score_after": 50,
+      "delta": 0,
+      "fixes": [
+        "Add example output containing: surge.sh",
+        "Add example output containing: OK|ready|готова"
+      ]
+    }
+  ]
+}

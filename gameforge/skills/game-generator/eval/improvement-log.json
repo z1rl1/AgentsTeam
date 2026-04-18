@@ -1,0 +1,62 @@
+{
+  "skill": "game-generator",
+  "runs": [
+    {
+      "date": "2026-04-16T23:42:04.274610",
+      "round": 1,
+      "score_before": 37,
+      "score_after": 37,
+      "delta": 0,
+      "fixes_applied": [
+        "Add example showing 'SUCCESS|success|saved|готова|Generating' in skill output",
+        "Add example showing 'KB|bytes|Lines|lines|size' in skill output",
+        "Add example showing 'Time:|sec|s\\b|\\d+\\.\\d+' in skill output",
+        "Add example showing 'canvas|Canvas|DOM' in skill output",
+        "Add example showing '[a-z]+-[a-z]+-\\d+|slug|Generating:' in skill output",
+        "Add example URL to output (e.g., surge.sh link)",
+        "Add example showing 'surge|GAME_URL|играть|Играть|link' in skill output",
+        "Add example showing 'Enter|стрелки|управление|Control|WASD|Space' in skill output",
+        "Expand skill documentation — too brief (check: At least 20 words of output)",
+        "Add example showing 'Playtester|score|%|playtester' in skill output"
+      ]
+    },
+    {
+      "date": "2026-04-16T23:45:52.342200",
+      "round": 1,
+      "score_before": 37,
+      "score_after": 37,
+      "delta": 0,
+      "fixes": [
+        "Add example output containing: SUCCESS|success|saved|готова|Generating",
+        "Add example output containing: KB|bytes|Lines|lines|size",
+        "Add example output containing: Time:|sec|s\\b|\\d+\\.\\d+",
+        "Add example output containing: canvas|Canvas|DOM",
+        "Add example output containing: [a-z]+-[a-z]+-\\d+|slug|Generating:",
+        "Add example URL to output section",
+        "Add example output containing: surge|GAME_URL|играть|Играть|link",
+        "Add example output containing: Enter|стрелки|управление|Control|WASD|Sp",
+        "Expand docs - too brief: At least 20 words of output",
+        "Add example output containing: Playtester|score|%|playtester"
+      ]
+    },
+    {
+      "date": "2026-04-16T23:45:52.428101",
+      "round": 2,
+      "score_before": 37,
+      "score_after": 37,
+      "delta": 0,
+      "fixes": [
+        "Add example output containing: SUCCESS|success|saved|готова|Generating",
+        "Add example output containing: KB|bytes|Lines|lines|size",
+        "Add example output containing: Time:|sec|s\\b|\\d+\\.\\d+",
+        "Add example output containing: canvas|Canvas|DOM",
+        "Add example output containing: [a-z]+-[a-z]+-\\d+|slug|Generating:",
+        "Add example URL to output section",
+        "Add example output containing: surge|GAME_URL|играть|Играть|link",
+        "Add example output containing: Enter|стрелки|управление|Control|WASD|Sp",
+        "Expand docs - too brief: At least 20 words of output",
+        "Add example output containing: Playtester|score|%|playtester"
+      ]
+    }
+  ]
+}

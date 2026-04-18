@@ -1,0 +1,55 @@
+{
+  "skill": "user-memory",
+  "version": "1.0",
+  "description": "Stores and retrieves VK user game preferences",
+  "assertions": [
+    {
+      "id": "non_empty",
+      "type": "non_empty",
+      "description": "Output not empty"
+    },
+    {
+      "id": "no_error",
+      "type": "not_contains",
+      "pattern": "Traceback|Error:|Exception",
+      "description": "No Python errors"
+    },
+    {
+      "id": "has_user_ref",
+      "type": "contains",
+      "pattern": "user|User|Total|games|Saved",
+      "description": "References user data",
+      "case_insensitive": true
+    },
+    {
+      "id": "has_theme_or_type",
+      "type": "contains",
+      "pattern": "theme|type|favorite|cyberpunk|space|retro|neon|minimal|snake|tetris|pong|clicker",
+      "description": "Contains theme or game type",
+      "case_insensitive": true
+    },
+    {
+      "id": "no_traceback",
+      "type": "not_contains",
+      "pattern": "traceback",
+      "description": "No stack traces",
+      "case_insensitive": true
+    },
+    {
+      "id": "min_words",
+      "type": "min_words",
+      "min": 4,
+      "description": "At least 4 words"
+    },
+    {
+      "id": "has_number",
+      "type": "has_number",
+      "description": "Contains numeric data (game count etc)"
+    },
+    {
+      "id": "ends_no_question",
+      "type": "ends_no_question",
+      "description": "Ends with statement"
+    }
+  ]
+}

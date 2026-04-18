@@ -1,0 +1,39 @@
+{
+  "skill": "retro",
+  "version": "2.0",
+  "description": "Post-implementation retrospective",
+  "assertions": [
+    {
+      "id": "non_empty",
+      "type": "non_empty",
+      "description": "Output not empty"
+    },
+    {
+      "id": "no_python_error",
+      "type": "not_contains",
+      "pattern": "Traceback|SyntaxError|ImportError|NameError",
+      "description": "No Python runtime errors"
+    },
+    {
+      "id": "has_heading",
+      "type": "has_heading",
+      "description": "Has ## headings"
+    },
+    {
+      "id": "has_code_block",
+      "type": "has_code_block",
+      "description": "Has code examples"
+    },
+    {
+      "id": "min_words",
+      "type": "min_words",
+      "min": 50,
+      "description": "At least 50 words"
+    },
+    {
+      "id": "ends_no_question",
+      "type": "ends_no_question",
+      "description": "Ends with statement"
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "skill": "game-generator",
+  "version": "2.1",
+  "description": "Doc quality checked statically; runtime assertions need real LLM output",
+  "assertions": [
+    {
+      "id": "non_empty",
+      "type": "non_empty",
+      "description": "SKILL.md not empty"
+    },
+    {
+      "id": "has_heading",
+      "type": "has_heading",
+      "description": "Has ## headings"
+    },
+    {
+      "id": "has_code_block",
+      "type": "has_code_block",
+      "description": "Has ``` code examples"
+    },
+    {
+      "id": "min_words",
+      "type": "min_words",
+      "min": 100,
+      "description": "At least 100 words"
+    },
+    {
+      "id": "min_lines",
+      "type": "min_lines",
+      "min": 30,
+      "description": "At least 30 lines"
+    },
+    {
+      "id": "has_algorithm",
+      "type": "contains",
+      "pattern": "Шаг|Step|алгоритм|algorithm|mkdir|python3|bash",
+      "description": "Has step-by-step algorithm",
+      "case_insensitive": true
+    },
+    {
+      "id": "has_theme",
+      "type": "contains",
+      "pattern": "cyberpunk|space|retro|neon|minimal",
+      "description": "Mentions themes"
+    },
+    {
+      "id": "has_deploy",
+      "type": "contains",
+      "pattern": "deploy|surge|деплой",
+      "description": "Mentions deployment",
+      "case_insensitive": true
+    },
+    {
+      "id": "has_vk_response",
+      "type": "contains",
+      "pattern": "VK|вк|ответ|Играть|ссылк",
+      "description": "Has VK response template",
+      "case_insensitive": true
+    },
+    {
+      "id": "no_templates_ref",
+      "type": "not_contains",
+      "pattern": "шаблон.*snake|snake_template|tetris_template",
+      "description": "No old template refs",
+      "case_insensitive": true
+    },
+    {
+      "id": "has_llm_ref",
+      "type": "contains",
+      "pattern": "LLM|MiniMax|minimax|OpenRouter|API|модел",
+      "description": "Mentions LLM/API",
+      "case_insensitive": true
+    },
+    {
+      "id": "ends_no_question",
+      "type": "ends_no_question",
+      "description": "Ends with statement"
+    },
+    {
+      "id": "rt_has_success",
+      "type": "needs_ai",
+      "description": "[RUNTIME] Output shows SUCCESS"
+    },
+    {
+      "id": "rt_has_url",
+      "type": "needs_ai",
+      "description": "[RUNTIME] Output contains surge.sh URL"
+    },
+    {
+      "id": "rt_has_playtester",
+      "type": "needs_ai",
+      "description": "[RUNTIME] Playtester score reported"
+    },
+    {
+      "id": "rt_no_api_error",
+      "type": "needs_ai",
+      "description": "[RUNTIME] No 401/rate-limit errors"
+    }
+  ]
+}

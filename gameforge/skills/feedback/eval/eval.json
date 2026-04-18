@@ -1,0 +1,56 @@
+{
+  "skill": "feedback",
+  "version": "1.0",
+  "description": "User feedback detection, storage and retrieval",
+  "assertions": [
+    {
+      "id": "non_empty",
+      "type": "non_empty",
+      "description": "Output not empty"
+    },
+    {
+      "id": "no_error",
+      "type": "not_contains",
+      "pattern": "Traceback|Error:|Exception",
+      "description": "No Python errors"
+    },
+    {
+      "id": "has_sentiment",
+      "type": "contains",
+      "pattern": "negative|positive|neutral|suggestion",
+      "description": "Detects sentiment",
+      "case_insensitive": true
+    },
+    {
+      "id": "has_feedback_word",
+      "type": "contains",
+      "pattern": "feedback|constraint|saved|Понял|запомнил",
+      "description": "Feedback acknowledged",
+      "case_insensitive": true
+    },
+    {
+      "id": "no_traceback",
+      "type": "not_contains",
+      "pattern": "traceback|line \\d+",
+      "description": "No stack traces",
+      "case_insensitive": true
+    },
+    {
+      "id": "min_words",
+      "type": "min_words",
+      "min": 3,
+      "description": "At least 3 words output"
+    },
+    {
+      "id": "has_user_id",
+      "type": "contains",
+      "pattern": "user|User|\\d{6,}",
+      "description": "References user ID"
+    },
+    {
+      "id": "ends_no_question",
+      "type": "ends_no_question",
+      "description": "Ends with statement not question"
+    }
+  ]
+}
