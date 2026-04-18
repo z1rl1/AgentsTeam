@@ -1,0 +1,19 @@
+# OpenClaw runtime internals
+.clawhub/
+.openclaw/
+
+# Generated games (build artifacts)
+games/
+
+# User data (like a database)
+memory/
+
+# Runtime state
+state/
+
+# Logs and metrics (runtime data)
+hooks/logs/
+hooks/metrics/
+
+# Accidentally copied AgentsTeam workspace
+main/
