@@ -1,69 +1,45 @@
 ---
 name: game-playtester
-description: Tests HTML5 game quality before deployment. Checks for start screen, canvas, game loop, game over, score display, controls, and no blocking alerts. Returns READY/ISSUES/BROKEN verdict.
+description: Strict quality gate for generated HTML5 games. Rejects tiny prototypes, weak visuals, missing genre mechanics, hanging dialogs, and non-responsive canvas layouts. Returns READY/ISSUES/BROKEN.
 ---
 
 # Game Playtester Skill
 
-QA-проверка HTML5 игры перед деплоем на surge.sh.
+QA gate before any public deploy.
 
-## Команды
+## Commands
 
-### Протестировать конкретную игру
 ```bash
 python3 /root/.openclaw/workspace/skills/game-playtester/scripts/game_playtester.py {slug}
 ```
 
-### Протестировать все игры
-```bash
-python3 /root/.openclaw/workspace/skills/game-playtester/scripts/game_playtester.py
-```
+## What Is Checked
 
-## Что проверяется (7 чеков)
+The checker now validates both technical and product quality:
 
-| Чек | Что ищет | Тип |
-|-----|----------|-----|
-| Start screen | `Enter|Space` в коде | Required |
-| Canvas or DOM | `<canvas` или `getElementById` | Required |
-| Game loop | `setInterval` или `requestAnimationFrame` | Required |
-| Game over | `game.?over` или `running.*false` | Required |
-| Score/points | `score|Score|points` | Optional |
-| Arrow key controls | `ArrowUp|ArrowLeft` | Optional |
-| No blocking alert() | Отсутствие `alert(` | Invert |
+- complete single-file HTML document
+- canvas renderer
+- large or responsive canvas, not a tiny boxed prototype
+- requestAnimationFrame loop with frame timing
+- start/restart, game over/win state, score/objective UI
+- keyboard controls
+- substantial code size
+- rich canvas drawing density
+- animation/effects
+- no alert/prompt/confirm
+- no external dependencies
+- genre-specific mechanics from `gameforge.json` and slug
 
-## Вердикты
+For platformer / beat-em-up games it additionally requires physics, jump/velocity, scrolling camera or wider level, enemies, combat/hit detection, health/lives, and city/platform scenery.
 
-- **READY** — score >= 80% (6-7 из 7) — можно деплоить
-- **ISSUES** — score 60-79% (4-5 из 7) — деплоить с предупреждением
-- **BROKEN** — score < 60% (< 4 из 7) — НЕ деплоить, регенерировать
+## Verdicts
 
-## Пример вывода
+- **READY**: score >= 85% and no required failures. Public deploy is allowed.
+- **ISSUES**: score 65-84% or any required failure. Do not deploy; regenerate or fix.
+- **BROKEN**: score < 65%. Do not deploy; regenerate.
 
-```
-Testing: snake-cyberpunk-1234
-=============================================
-  [OK] Start screen (Enter/Space)
-  [OK] Canvas or DOM element
-  [OK] Game loop (interval/RAF)
-  [OK] Game over condition
-  [OK] Score/points
-  [WARN] Arrow key controls
-  [OK] No blocking alert()
----------------------------------------------
-  Result: 6/7 (85%) — READY
-=============================================
-```
+## Rules
 
-## Когда использовать
-
-1. Автоматически — generate_game.py запускает playtester после генерации
-2. Вручную — перед деплоем если хочешь проверить
-3. После исправлений — убедиться что score улучшился
-
-## Пороги деплоя
-
-```python
-score >= 80%  # READY  — деплой разрешён
-score >= 60%  # ISSUES — деплой с предупреждением
-score < 60%   # BROKEN — запрети деплой, скажи пользователю
-```
+- Never deploy an ISSUES/BROKEN game to a user.
+- A game being technically playable is not enough; it must look and feel presentable.
+- If an old game now fails, that is expected. The gate is intentionally stricter.

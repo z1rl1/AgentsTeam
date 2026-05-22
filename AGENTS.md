@@ -52,7 +52,7 @@
 - **Input:** slug игры
 - **Output:** Test Report: PASS/WARN/FAIL + конкретные проблемы
 - **Mode:** plan (только читает и запускает тесты)
-- **Threshold:** PASS >= 60%, WARN 40-59%, FAIL < 40%
+- **Threshold:** READY >= 85% with no required failures. ISSUES/BROKEN must not be deployed.
 - **File:** agents/game-tester.md
 
 ### game-deployer
