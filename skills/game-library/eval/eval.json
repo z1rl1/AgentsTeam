@@ -1,0 +1,43 @@
+{
+  "skill": "game-library",
+  "version": "1.0",
+  "description": "Searchable catalog of generated games",
+  "assertions": [
+    {
+      "id": "non_empty",
+      "type": "non_empty",
+      "description": "Output not empty"
+    },
+    {
+      "id": "no_error",
+      "type": "not_contains",
+      "pattern": "Traceback|Error:|Exception",
+      "description": "No Python errors"
+    },
+    {
+      "id": "has_game_ref",
+      "type": "contains",
+      "pattern": "game|Game|slug|library|Library|empty|catalog",
+      "description": "References games or catalog",
+      "case_insensitive": true
+    },
+    {
+      "id": "no_traceback",
+      "type": "not_contains",
+      "pattern": "traceback",
+      "description": "No stack traces",
+      "case_insensitive": true
+    },
+    {
+      "id": "min_words",
+      "type": "min_words",
+      "min": 3,
+      "description": "At least 3 words"
+    },
+    {
+      "id": "ends_no_question",
+      "type": "ends_no_question",
+      "description": "Ends with statement"
+    }
+  ]
+}

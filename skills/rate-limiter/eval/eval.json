@@ -1,0 +1,38 @@
+{
+  "skill": "rate-limiter",
+  "version": "2.0",
+  "description": "Per-user rate limiting",
+  "assertions": [
+    {
+      "id": "non_empty",
+      "type": "non_empty",
+      "description": "Output not empty"
+    },
+    {
+      "id": "no_error",
+      "type": "not_contains",
+      "pattern": "Traceback|SyntaxError",
+      "description": "No Python errors"
+    },
+    {
+      "id": "has_status",
+      "type": "contains",
+      "pattern": "OK|BLOCKED|COOLDOWN|BUSY|active|lock|No active",
+      "description": "Shows status",
+      "case_insensitive": true
+    },
+    {
+      "id": "no_traceback",
+      "type": "not_contains",
+      "pattern": "traceback",
+      "description": "No stack traces",
+      "case_insensitive": true
+    },
+    {
+      "id": "min_words",
+      "type": "min_words",
+      "min": 2,
+      "description": "At least 2 words"
+    }
+  ]
+}

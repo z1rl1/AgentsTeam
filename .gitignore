@@ -1,0 +1,11 @@
+# Local secrets and machine-specific config
+.env
+.env.*
+!.env.example
+
+# Python/runtime noise
+__pycache__/
+*.py[cod]
+
+# Local dependency folders
+node_modules/

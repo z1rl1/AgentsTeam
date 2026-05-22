@@ -1,0 +1,17 @@
+{
+  "skill": "game-bug-fixer",
+  "runs": [
+    {
+      "date": "2026-04-16T23:42:04.172908",
+      "round": 1,
+      "score_before": 25,
+      "score_after": 25,
+      "delta": 0,
+      "fixes_applied": [
+        "Remove or avoid 'ошибка|error|failed' from skill output",
+        "Add example showing 'surge.sh' in skill output",
+        "Add example showing 'OK|ready|готова' in skill output"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "skill": "retro",
+  "runs": [
+    {
+      "date": "2026-04-16T23:45:52.764241",
+      "round": 1,
+      "score_before": 50,
+      "score_after": 50,
+      "delta": 0,
+      "fixes": [
+        "Remove pattern from output: ошибка|error|failed"
+      ]
+    },
+    {
+      "date": "2026-04-16T23:45:52.764987",
+      "round": 2,
+      "score_before": 50,
+      "score_after": 50,
+      "delta": 0,
+      "fixes": [
+        "Remove pattern from output: ошибка|error|failed"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "skill": "skill-health",
+  "version": "2.0",
+  "description": "Dashboard showing all skills health status",
+  "assertions": [
+    {
+      "id": "non_empty",
+      "type": "non_empty",
+      "description": "Output not empty"
+    },
+    {
+      "id": "no_error",
+      "type": "not_contains",
+      "pattern": "Traceback|Error:|Exception",
+      "description": "No Python errors"
+    },
+    {
+      "id": "has_header",
+      "type": "contains",
+      "pattern": "GAMEFORGE|GameForge|SKILL|dashboard|DASHBOARD",
+      "description": "Has dashboard header",
+      "case_insensitive": true
+    },
+    {
+      "id": "has_separator",
+      "type": "contains",
+      "pattern": "={5,}|-{5,}",
+      "description": "Has formatted separator"
+    },
+    {
+      "id": "has_total",
+      "type": "contains",
+      "pattern": "Total|total|skills|скиллов",
+      "description": "Shows total count",
+      "case_insensitive": true
+    },
+    {
+      "id": "has_number",
+      "type": "has_number",
+      "description": "Contains numeric data"
+    },
+    {
+      "id": "has_eval_col",
+      "type": "contains",
+      "pattern": "eval|Eval|score|Score",
+      "description": "Shows eval column",
+      "case_insensitive": true
+    },
+    {
+      "id": "min_lines",
+      "type": "min_lines",
+      "min": 10,
+      "description": "At least 10 lines (10+ skills shown)"
+    },
+    {
+      "id": "no_traceback",
+      "type": "not_contains",
+      "pattern": "traceback",
+      "description": "No stack traces",
+      "case_insensitive": true
+    }
+  ]
+}

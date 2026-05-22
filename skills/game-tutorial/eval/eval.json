@@ -1,0 +1,30 @@
+{
+  "skill": "game-tutorial",
+  "version": "1.0",
+  "assertions": [
+    {
+      "id": "non_empty",
+      "type": "non_empty",
+      "description": "Output not empty"
+    },
+    {
+      "id": "no_error",
+      "type": "not_contains",
+      "pattern": "ошибка|error|failed",
+      "description": "No errors",
+      "case_insensitive": true
+    },
+    {
+      "id": "has_link",
+      "type": "contains",
+      "pattern": "surge.sh",
+      "description": "Has surge link"
+    },
+    {
+      "id": "has_emoji",
+      "type": "contains",
+      "pattern": "OK|ready|готова",
+      "description": "Has status"
+    }
+  ]
+}

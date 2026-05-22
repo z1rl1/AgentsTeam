@@ -1,0 +1,33 @@
+{
+  "skill": "observability",
+  "runs": [
+    {
+      "date": "2026-04-16T23:45:52.663127",
+      "round": 1,
+      "score_before": 44,
+      "score_after": 44,
+      "delta": 0,
+      "fixes": [
+        "Add example output containing: token|Token|tokens",
+        "Add example output containing: \\$|cost|Cost|USD|usd",
+        "Fix: Contains numeric stats",
+        "Add example output containing: ={3,}|-{3,}",
+        "Add example output containing: model|Model|minimax|openrouter|gpt|claud"
+      ]
+    },
+    {
+      "date": "2026-04-16T23:45:52.695637",
+      "round": 2,
+      "score_before": 44,
+      "score_after": 44,
+      "delta": 0,
+      "fixes": [
+        "Add example output containing: token|Token|tokens",
+        "Add example output containing: \\$|cost|Cost|USD|usd",
+        "Fix: Contains numeric stats",
+        "Add example output containing: ={3,}|-{3,}",
+        "Add example output containing: model|Model|minimax|openrouter|gpt|claud"
+      ]
+    }
+  ]
+}

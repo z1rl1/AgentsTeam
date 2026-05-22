@@ -1,0 +1,57 @@
+{
+  "skill": "prompt-optimizer",
+  "version": "1.0",
+  "description": "Tracks generation quality and evolves base prompt",
+  "assertions": [
+    {
+      "id": "non_empty",
+      "type": "non_empty",
+      "description": "Output not empty"
+    },
+    {
+      "id": "no_error",
+      "type": "not_contains",
+      "pattern": "Traceback|Error:|Exception",
+      "description": "No Python errors"
+    },
+    {
+      "id": "has_score",
+      "type": "contains",
+      "pattern": "score|Score|%|percent",
+      "description": "References quality score",
+      "case_insensitive": true
+    },
+    {
+      "id": "has_analysis",
+      "type": "contains",
+      "pattern": "game|games|theme|type|total",
+      "description": "Analyzes game data",
+      "case_insensitive": true
+    },
+    {
+      "id": "has_number",
+      "type": "has_number",
+      "description": "Contains numeric data"
+    },
+    {
+      "id": "min_lines",
+      "type": "min_lines",
+      "min": 3,
+      "description": "At least 3 lines of analysis"
+    },
+    {
+      "id": "no_traceback",
+      "type": "not_contains",
+      "pattern": "traceback",
+      "description": "No stack traces",
+      "case_insensitive": true
+    },
+    {
+      "id": "has_recommendation",
+      "type": "contains",
+      "pattern": "improve|improvement|better|fix|suggestion|pattern",
+      "description": "Has actionable recommendation",
+      "case_insensitive": true
+    }
+  ]
+}
