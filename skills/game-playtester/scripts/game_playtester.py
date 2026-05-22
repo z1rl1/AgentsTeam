@@ -50,6 +50,31 @@ def count_draw_calls(code):
     return len(re.findall(r'ctx\.(fillRect|strokeRect|arc|ellipse|lineTo|quadraticCurveTo|bezierCurveTo|drawImage|fillText|strokeText|createLinearGradient|createRadialGradient)', code))
 
 
+def count_arrays_and_entities(code):
+    array_defs = len(re.findall(r'\b(?:const|let|var)\s+\w+\s*=\s*\[', code))
+    pushes = len(re.findall(r'\.push\s*\(', code))
+    classes = len(re.findall(r'\bclass\s+\w+', code))
+    object_literals = len(re.findall(r'\{\s*(?:x|y|vx|vy|width|height|hp|health|type)\s*:', code))
+    return array_defs + pushes + classes + object_literals
+
+
+def has_rich_scene(code):
+    visual_terms = len(re.findall(r'gradient|shadow|particle|spark|debris|trail|glow|shake|flash|explosion|parallax|background|building|cloud|star|window|tree|mountain|city|wave|dust|smoke', code, re.I))
+    return visual_terms >= 12 and count_draw_calls(code) >= 55
+
+
+def has_core_gameplay_depth(code):
+    mechanics = [
+        r'collision|intersect|overlap|distance',
+        r'gravity|velocity|vx|vy|accel|friction|bounce',
+        r'level|wave|round|stage|progress|nextLevel',
+        r'enem|target|obstacle|goal|food|block|projectile|bullet',
+        r'health|hp|lives|damage|score|combo|ammo|shots',
+        r'particle|debris|spark|explosion|shake|flash|trail',
+    ]
+    return sum(1 for pat in mechanics if has(pat, code)) >= 5
+
+
 def genre_checks(description, slug, code):
     d = f'{description} {slug}'.lower()
     checks = []
@@ -104,7 +129,11 @@ def test_game(slug):
         ('Game over or win state', r'game.?over|state\s*=\s*["\'](?:gameover|win)|running\s*=\s*false|victory', True, False),
         ('Score/objective UI', r'score|points|objective', True, False),
         ('Keyboard controls', r'ArrowUp|ArrowLeft|KeyA|KeyD|KeyW|KeyS|keydown', True, False),
+        ('GameForge metadata', None, True, False),
         ('Substantial code size', None, True, False),
+        ('Rich scene density', None, True, False),
+        ('Core gameplay depth', None, True, False),
+        ('Multiple entities/systems', None, True, False),
         ('Rich canvas drawing', None, True, False),
         ('Animated visual effects', r'particle|spark|shake|flash|trail|glow|shadowBlur|animation|frame|pulse', False, False),
         ('No blocking dialogs', r'alert\s*[(]|prompt\s*[(]|confirm\s*[(]', True, True),
@@ -118,10 +147,18 @@ def test_game(slug):
     for name, pat, required, invert in checks:
         if name == 'Large/responsive canvas':
             found = canvas_large_or_responsive(code)
+        elif name == 'GameForge metadata':
+            found = bool(meta.get('description')) and bool(meta.get('title'))
         elif name == 'Substantial code size':
-            found = len(code.encode('utf-8')) >= 16000 or code.count('\n') >= 260
+            found = len(code.encode('utf-8')) >= 32000 or code.count('\n') >= 450
+        elif name == 'Rich scene density':
+            found = has_rich_scene(code)
+        elif name == 'Core gameplay depth':
+            found = has_core_gameplay_depth(code)
+        elif name == 'Multiple entities/systems':
+            found = count_arrays_and_entities(code) >= 12
         elif name == 'Rich canvas drawing':
-            found = count_draw_calls(code) >= 35
+            found = count_draw_calls(code) >= 55
         else:
             found = has(pat, code)
         ok = (not found) if invert else found

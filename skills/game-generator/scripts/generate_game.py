@@ -67,16 +67,19 @@ Hard requirements:
 - Start screen, live HUD, score/objective, game over or win state, restart.
 - Keyboard controls appropriate to the genre.
 - Procedural visuals with layered background, styled sprites, animation, particles or hit effects.
+- Build a rich scene, not a sparse prototype: detailed background, foreground details, multiple object types, visual polish, and no large empty margins.
 - Real gameplay from the request: enemies/obstacles/goals/progression, not just movement.
+- If the user asks for a game like a known title, implement the core mechanics and feel in an original way; do not make a shallow visual imitation.
+- Include multiple interacting systems: player input, physics/movement, collisions, scoring, progression, feedback effects, and several entities.
 - Tune the first 30 seconds to be playable, readable, and fun.
 - Use Russian UI text if the user wrote Russian.
-- Keep code compact but complete: usually 250-600 lines.
+- Keep code complete and substantial: usually 450-1000 lines for visual arcade games. Do not optimize by removing polish.
 
 Genre requirements:
 {genre_requirements}
 
 Visual direction:
-Use the theme colors, but avoid empty black space. The first screen must look like a real game.
+Use the theme colors, but avoid empty black space. The first screen must look like a real finished web game with a large playable area, rich scenery, readable HUD, and polished objects.
 
 Return ONLY HTML. No Markdown. No explanation. Do not include reasoning or analysis.
 """

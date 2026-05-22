@@ -12,6 +12,18 @@ if [ -z "$GAME_DIR" ] || [ ! -d "$GAME_DIR" ]; then
     exit 1
 fi
 
+if [ ! -f "$GAME_DIR/gameforge.json" ]; then
+    echo "ERROR: refusing deploy: missing gameforge.json. Use generate_game.py; direct HTML drafts are not publishable." >&2
+    exit 1
+fi
+
+GAME_BASENAME="$(basename "$GAME_DIR")"
+PLAYTESTER="/root/.openclaw/workspace/skills/game-playtester/scripts/game_playtester.py"
+if ! python3 "$PLAYTESTER" "$GAME_BASENAME"; then
+    echo "ERROR: refusing deploy: QA did not return READY." >&2
+    exit 1
+fi
+
 if ! command -v surge >/dev/null 2>&1; then
     npm install -g surge --quiet
 fi
