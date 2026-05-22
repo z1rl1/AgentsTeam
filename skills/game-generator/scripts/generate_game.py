@@ -352,7 +352,7 @@ def generate(description, title, theme, output_dir, user_id=None):
                 preview = raw[:500].replace("\n", " ")
                 print(f"  No complete HTML found. Response preview: {preview}")
                 retry_feedback = "Previous attempt failed: response did not contain a complete <!DOCTYPE html> document. Return only one complete HTML file."
-                log_generation(slug, MODEL, usage, False, duration, 0)
+                log_generation(slug, minimax_model_name() if MINIMAX_API_KEY else MODEL, usage, False, duration, 0)
                 continue
 
             out_file = output_path / "index.html"
@@ -370,7 +370,7 @@ def generate(description, title, theme, output_dir, user_id=None):
 
             if score >= QUALITY_THRESHOLD:
                 record_quality(slug, score, theme, description.split()[0] if description.split() else "custom")
-                log_generation(slug, MODEL, usage, True, time.time() - total_start, score)
+                log_generation(slug, minimax_model_name() if MINIMAX_API_KEY else MODEL, usage, True, time.time() - total_start, score)
                 print(f"ACCEPTED: {score}% >= {QUALITY_THRESHOLD}%")
                 return True
 
@@ -388,7 +388,7 @@ def generate(description, title, theme, output_dir, user_id=None):
     if best_html:
         (output_path / "index.html").write_text(best_html, encoding="utf-8")
     record_quality(slug, max(best_score, 0), theme, description.split()[0] if description.split() else "custom")
-    log_generation(slug, MODEL, best_usage, False, time.time() - total_start, max(best_score, 0))
+    log_generation(slug, minimax_model_name() if MINIMAX_API_KEY else MODEL, best_usage, False, time.time() - total_start, max(best_score, 0))
     print(f"REJECTED: best score {best_score}% < {QUALITY_THRESHOLD}%")
     return False
 
