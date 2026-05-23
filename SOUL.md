@@ -130,8 +130,11 @@ Slug: `{game_type}-{theme}-{4digits}`.
 
 ```text
 docs/gameforge/legacy-soul-full.md
+docs/gameforge/design-quality-gate.md
 ```
 
 Она нужна как справочник по старым идеям, жанрам, тону и workflow. Но если там есть конфликт с этим файлом, выполняй этот файл.
 
 Активное правило простое: уникальная AI-игра через MiniMax-M2.7 + MiniMax image/music assets, строгий QA, deploy только хорошего результата.
+
+Design rules source: `docs/gameforge/design-quality-gate.md`. Use it as active art-direction guidance, not optional reference.
