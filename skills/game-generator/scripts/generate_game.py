@@ -7,6 +7,7 @@ Calls LLM API, extracts a single-file HTML5 game, runs strict quality checks,
 and retries once with targeted feedback before accepting the result.
 """
 import sys, os, json, re, time, subprocess, base64
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 import urllib.request, urllib.error
 import socket
@@ -40,6 +41,10 @@ MINIMAX_TIMEOUT_SECONDS = int(os.environ.get("MINIMAX_TIMEOUT_SECONDS", "180"))
 MINIMAX_ASSET_TIMEOUT_SECONDS = int(os.environ.get("MINIMAX_ASSET_TIMEOUT_SECONDS", "240"))
 GENERATE_ASSETS = os.environ.get("GAMEFORGE_GENERATE_ASSETS", "1").lower() not in {"0", "false", "no", "off"}
 REQUIRE_GENERATED_ASSETS = os.environ.get("GAMEFORGE_REQUIRE_GENERATED_ASSETS", "1").lower() not in {"0", "false", "no", "off"}
+ASSET_WORKERS = int(os.environ.get("GAMEFORGE_ASSET_WORKERS", "4"))
+if REQUIRE_GENERATED_ASSETS and not GENERATE_ASSETS:
+    print("GAMEFORGE_GENERATE_ASSETS=0 ignored because generated assets are required")
+    GENERATE_ASSETS = True
 
 THEME_COLORS = {
     "cyberpunk": {"bg": "#0a0010", "primary": "#ff00ff", "secondary": "#00ffff", "text": "#ffffff", "accent": "#ff006e"},
@@ -287,10 +292,38 @@ def generate_music_asset(assets_dir, filename, prompt):
     raise RuntimeError("music response did not contain audio data")
 
 
+def manifest_files_exist(output_path, manifest):
+    images = manifest.get("images") or []
+    audio = manifest.get("audio") or []
+    image_ok = sum(1 for asset in images if (output_path / asset.get("path", "")).exists()) >= 2
+    audio_ok = not audio or any((output_path / asset.get("path", "")).exists() for asset in audio)
+    return image_ok and audio_ok
+
+
+def load_existing_asset_pack(output_path):
+    manifest_path = output_path / "assets" / "manifest.json"
+    if not manifest_path.exists():
+        return None
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    if manifest.get("enabled") and manifest_files_exist(output_path, manifest):
+        manifest["reused"] = True
+        return manifest
+    return None
+
+
 def build_asset_pack(output_path, description, title, theme):
     manifest = {"enabled": False, "required": REQUIRE_GENERATED_ASSETS, "images": [], "audio": [], "errors": []}
+    existing = load_existing_asset_pack(output_path)
+    if existing:
+        print("Reusing existing MiniMax assets from assets/manifest.json")
+        return existing
     if not GENERATE_ASSETS:
         manifest["errors"].append("GAMEFORGE_GENERATE_ASSETS disabled")
+        if REQUIRE_GENERATED_ASSETS:
+            raise RuntimeError("Generated assets are required; GAMEFORGE_GENERATE_ASSETS=0 is not allowed")
         return manifest
     if not MINIMAX_API_KEY:
         manifest["errors"].append("MINIMAX_API_KEY missing; cannot generate bitmap/music assets")
@@ -309,37 +342,35 @@ def build_asset_pack(output_path, description, title, theme):
         ("sprites.png", "1:1", "sprite sheet concept art containing the main playable character plus enemies/objects from the request, full body, readable silhouettes, multiple poses, game-ready. " + common_style),
         ("title.png", "16:9", "dramatic title/menu key art for the game, clean focal composition, no text, attractive first screen. " + common_style),
     ]
-    print("Generating MiniMax image/music assets...")
-    for filename, aspect, prompt in image_jobs:
-        try:
-            asset = generate_image_asset(assets_dir, filename, prompt, aspect)
-            manifest["images"].append(asset)
-            print(f"  Asset image: {asset['path']}")
-        except Exception as exc:
-            msg = f"{filename}: {exc}"
-            manifest["errors"].append(msg)
-            print(f"  Asset image failed: {msg}")
-
     music_prompt = (
         f"Instrumental looping game soundtrack for {title}. {description}. "
         f"Theme {theme}. Energetic, polished, suitable for browser arcade gameplay, no vocals."
     )
-    try:
-        asset = generate_music_asset(assets_dir, "theme.mp3", music_prompt)
-        manifest["audio"].append(asset)
-        print(f"  Asset music: {asset['path']}")
-    except Exception as exc:
-        msg = f"theme.mp3: {exc}"
-        manifest["errors"].append(msg)
-        print(f"  Asset music failed: {msg}")
 
+    print(f"Generating MiniMax image/music assets in parallel ({ASSET_WORKERS} workers)...")
+    futures = {}
+    with ThreadPoolExecutor(max_workers=max(1, ASSET_WORKERS)) as pool:
+        for filename, aspect, prompt in image_jobs:
+            futures[pool.submit(generate_image_asset, assets_dir, filename, prompt, aspect)] = ("image", filename)
+        futures[pool.submit(generate_music_asset, assets_dir, "theme.mp3", music_prompt)] = ("music", "theme.mp3")
+        for future in as_completed(futures):
+            kind, filename = futures[future]
+            try:
+                asset = future.result()
+                manifest["images" if kind == "image" else "audio"].append(asset)
+                print(f"  Asset {kind}: {asset['path']}")
+            except Exception as exc:
+                msg = f"{filename}: {exc}"
+                manifest["errors"].append(msg)
+                print(f"  Asset {kind} failed: {msg}")
+
+    manifest["images"].sort(key=lambda item: item.get("path", ""))
+    manifest["audio"].sort(key=lambda item: item.get("path", ""))
     manifest["enabled"] = bool(manifest["images"] or manifest["audio"])
     (assets_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if REQUIRE_GENERATED_ASSETS and len(manifest["images"]) < 2:
         raise RuntimeError("Generated bitmap assets are required; fewer than 2 MiniMax image assets were created")
     return manifest
-
-
 def asset_instructions(manifest):
     if not manifest or not manifest.get("enabled"):
         return ""
@@ -584,7 +615,7 @@ def generate(description, title, theme, output_dir, user_id=None):
             duration = time.time() - t0
             print(f"ERROR: {e}")
             retry_feedback = f"Previous attempt failed with runtime error: {e}. Return a complete robust HTML game."
-            log_generation(slug, MODEL, {}, False, duration, 0)
+            log_generation(slug, minimax_model_name() if MINIMAX_API_KEY else MODEL, {}, False, duration, 0)
 
     if best_html:
         (output_path / "index.html").write_text(best_html, encoding="utf-8")

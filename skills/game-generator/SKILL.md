@@ -45,14 +45,13 @@ python3 /root/.openclaw/workspace/skills/game-library/scripts/library.py find "{
 ### Шаг 4 — Сгенерируй игру через LLM
 
 ```bash
-export MINIMAX_API_KEY="ваш_ключ"
 python3 /root/.openclaw/workspace/skills/game-generator/scripts/generate_game.py \
   "{description}" "{title}" "{theme}" \
   "/root/.openclaw/workspace/games/{slug}" \
   "{user_id}"
 ```
 
-Скрипт вызывает MiniMax image_generation/music_generation для PNG/MP3 ассетов, затем MiniMax text API для HTML5 кода, сохраняет index.html и assets/.
+Скрипт вызывает MiniMax image_generation/music_generation для PNG/MP3 ассетов параллельно, затем MiniMax-M2.7 для HTML5 кода, сохраняет index.html и assets/. На retry он переиспользует уже созданные assets.
 Автоматически читает feedback пользователя и добавляет в промпт.
 Автоматически запускает playtester и логирует в observability.
 
@@ -99,6 +98,15 @@ python3 /root/.openclaw/workspace/skills/rate-limiter/scripts/rate_limit.py rele
 | neon | Зелёный неон | #00ff41, #00cc33 на #000000 |
 | minimal | Минимализм | #ff4444, #cc0000 на #0d1117 |
 
+
+## Speed / Quality Policy
+
+- Цель: обычно 5-10 минут на хорошую игру, не 20-25 минут.
+- Не ускоряй через отключение ассетов. Запрещено ставить `GAMEFORGE_GENERATE_ASSETS=0`.
+- Не передавай `MINIMAX_API_KEY=...` в command line; скрипт сам читает `.env`/secrets.
+- Используй `MiniMax-M2.7`; не переопределяй на `MiniMax-Text-01`.
+- Генератор сам переиспользует `assets/manifest.json`, если ассеты уже созданы, поэтому retry не должен заново делать PNG/MP3.
+- Если QA не прошёл, запускай retry тем же slug/output_dir, чтобы reuse ассетов ускорил repair.
 
 ## Обязательная asset pipeline
 
