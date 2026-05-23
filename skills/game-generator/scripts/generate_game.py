@@ -6,7 +6,7 @@ Usage: python3 generate_game.py "<description>" "<title>" "<theme>" "<output_dir
 Calls LLM API, extracts a single-file HTML5 game, runs strict quality checks,
 and retries once with targeted feedback before accepting the result.
 """
-import sys, os, json, re, time, subprocess
+import sys, os, json, re, time, subprocess, base64
 from pathlib import Path
 import urllib.request, urllib.error
 import socket
@@ -37,6 +37,9 @@ MAX_TOKENS = int(os.environ.get("GAMEFORGE_MAX_TOKENS", "60000"))
 QUALITY_THRESHOLD = int(os.environ.get("GAMEFORGE_QUALITY_THRESHOLD", "85"))
 MAX_ATTEMPTS = int(os.environ.get("GAMEFORGE_MAX_ATTEMPTS", "2"))
 MINIMAX_TIMEOUT_SECONDS = int(os.environ.get("MINIMAX_TIMEOUT_SECONDS", "180"))
+MINIMAX_ASSET_TIMEOUT_SECONDS = int(os.environ.get("MINIMAX_ASSET_TIMEOUT_SECONDS", "240"))
+GENERATE_ASSETS = os.environ.get("GAMEFORGE_GENERATE_ASSETS", "1").lower() not in {"0", "false", "no", "off"}
+REQUIRE_GENERATED_ASSETS = os.environ.get("GAMEFORGE_REQUIRE_GENERATED_ASSETS", "1").lower() not in {"0", "false", "no", "off"}
 
 THEME_COLORS = {
     "cyberpunk": {"bg": "#0a0010", "primary": "#ff00ff", "secondary": "#00ffff", "text": "#ffffff", "accent": "#ff006e"},
@@ -56,17 +59,19 @@ Colors: bg={bg}, primary={primary}, secondary={secondary}, accent={accent}, text
 {user_constraints}
 {prompt_improvements}
 {retry_feedback}
+{asset_instructions}
 
 Goal: a polished, varied, playable HTML5 arcade game. Do NOT make a tiny prototype or generic placeholder.
 
 Hard requirements:
-- Return one complete HTML file only, starting with <!DOCTYPE html>.
-- Inline CSS and JavaScript only. No CDN, no external files, no alert/prompt/confirm.
+- Return one complete index.html document only, starting with <!DOCTYPE html>.
+- Inline CSS and JavaScript. Local generated files under assets/ are allowed and expected. No CDN, no remote URLs, no alert/prompt/confirm.
 - Canvas renderer, responsive full-screen presentation, internal resolution at least 960x540.
 - requestAnimationFrame loop with deltaTime.
 - Start screen, live HUD, score/objective, game over or win state, restart.
 - Keyboard controls appropriate to the genre.
-- Procedural visuals with layered background, styled sprites, animation, particles or hit effects.
+- Generated bitmap assets must be used for the main background, title/menu art, player, enemies, vehicles, props, or other primary visible subjects when asset files are provided.
+- Procedural visuals may add particles, lighting, UI, hit effects, and fallback details, but primary actors must not be simple colored rectangles.
 - Build a rich scene, not a sparse prototype: detailed background, foreground details, multiple object types, visual polish, and no large empty margins.
 - Real gameplay from the request: enemies/obstacles/goals/progression, not just movement.
 - If the user asks for a game like a known title, implement the core mechanics and feel in an original way; do not make a shallow visual imitation.
@@ -167,6 +172,196 @@ def minimax_model_name():
     if model in {"MiniMax-Text-01", "MiniMax-Text"}:
         model = "MiniMax-M2.7"
     return model
+
+
+def truthy_env(name, default="1"):
+    return os.environ.get(name, default).lower() not in {"0", "false", "no", "off"}
+
+
+def post_json(url, payload, timeout):
+    data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers={
+        "Authorization": f"Bearer {MINIMAX_API_KEY}",
+        "Content-Type": "application/json",
+    })
+
+    def do_request():
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read())
+
+    resp = with_ipv4_dns(do_request)
+    base_resp = resp.get("base_resp") or {}
+    if base_resp.get("status_code") not in (None, 0):
+        raise RuntimeError(f"MiniMax API error {base_resp.get('status_code')}: {base_resp.get('status_msg')}")
+    return resp
+
+
+def collect_strings(value):
+    found = []
+    if isinstance(value, str):
+        found.append(value)
+    elif isinstance(value, list):
+        for item in value:
+            found.extend(collect_strings(item))
+    elif isinstance(value, dict):
+        for item in value.values():
+            found.extend(collect_strings(item))
+    return found
+
+
+def decode_image_string(value):
+    raw = value.strip()
+    if raw.startswith("data:image") and "," in raw:
+        raw = raw.split(",", 1)[1]
+    if len(raw) < 1000 or not re.fullmatch(r"[A-Za-z0-9+/=\s]+", raw):
+        return None
+    try:
+        data = base64.b64decode(re.sub(r"\s+", "", raw), validate=True)
+    except Exception:
+        return None
+    if data.startswith((b"\x89PNG\r\n\x1a\n", b"\xff\xd8\xff", b"RIFF")):
+        return data
+    return None
+
+
+def download_binary(url, timeout):
+    req = urllib.request.Request(url, headers={"User-Agent": "GameForge/1.0"})
+
+    def do_request():
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.read()
+
+    return with_ipv4_dns(do_request)
+
+
+def generate_image_asset(assets_dir, filename, prompt, aspect_ratio):
+    url = os.environ.get("MINIMAX_IMAGE_API_URL", "https://api.minimax.io/v1/image_generation")
+    payload = {
+        "model": os.environ.get("MINIMAX_IMAGE_MODEL", "image-01"),
+        "prompt": prompt[:1500],
+        "aspect_ratio": aspect_ratio,
+        "response_format": "base64",
+        "n": 1,
+        "prompt_optimizer": True,
+    }
+    resp = post_json(url, payload, MINIMAX_ASSET_TIMEOUT_SECONDS)
+    out_path = assets_dir / filename
+    for value in collect_strings(resp.get("data", resp)):
+        if value.startswith("http://") or value.startswith("https://"):
+            data = download_binary(value, MINIMAX_ASSET_TIMEOUT_SECONDS)
+            if len(data) > 1000:
+                out_path.write_bytes(data)
+                return {"type": "image", "path": f"assets/{filename}", "prompt": prompt, "source": "minimax-url"}
+        data = decode_image_string(value)
+        if data:
+            out_path.write_bytes(data)
+            return {"type": "image", "path": f"assets/{filename}", "prompt": prompt, "source": "minimax-base64"}
+    raise RuntimeError("image response did not contain downloadable image data")
+
+
+def generate_music_asset(assets_dir, filename, prompt):
+    url = os.environ.get("MINIMAX_MUSIC_API_URL", "https://api.minimax.io/v1/music_generation")
+    payload = {
+        "model": os.environ.get("MINIMAX_MUSIC_MODEL", "music-2.6"),
+        "prompt": prompt[:2000],
+        "is_instrumental": True,
+        "output_format": "hex",
+        "audio_setting": {"sample_rate": 44100, "bitrate": 256000, "format": "mp3"},
+    }
+    resp = post_json(url, payload, MINIMAX_ASSET_TIMEOUT_SECONDS)
+    data = resp.get("data") or {}
+    out_path = assets_dir / filename
+    audio = data.get("audio")
+    if isinstance(audio, str) and len(audio) > 100:
+        try:
+            out_path.write_bytes(bytes.fromhex(re.sub(r"\s+", "", audio)))
+            return {"type": "music", "path": f"assets/{filename}", "prompt": prompt, "source": "minimax-hex"}
+        except ValueError:
+            pass
+    for value in collect_strings(data):
+        if value.startswith("http://") or value.startswith("https://"):
+            audio_data = download_binary(value, MINIMAX_ASSET_TIMEOUT_SECONDS)
+            if len(audio_data) > 1000:
+                out_path.write_bytes(audio_data)
+                return {"type": "music", "path": f"assets/{filename}", "prompt": prompt, "source": "minimax-url"}
+    raise RuntimeError("music response did not contain audio data")
+
+
+def build_asset_pack(output_path, description, title, theme):
+    manifest = {"enabled": False, "required": REQUIRE_GENERATED_ASSETS, "images": [], "audio": [], "errors": []}
+    if not GENERATE_ASSETS:
+        manifest["errors"].append("GAMEFORGE_GENERATE_ASSETS disabled")
+        return manifest
+    if not MINIMAX_API_KEY:
+        manifest["errors"].append("MINIMAX_API_KEY missing; cannot generate bitmap/music assets")
+        if REQUIRE_GENERATED_ASSETS:
+            raise RuntimeError("Generated assets are required but MINIMAX_API_KEY is missing")
+        return manifest
+
+    assets_dir = output_path / "assets"
+    assets_dir.mkdir(parents=True, exist_ok=True)
+    common_style = (
+        f"Game title: {title}. User request: {description}. Theme: {theme}. "
+        "High quality game art, clear readable shapes, no UI text, no watermarks."
+    )
+    image_jobs = [
+        ("background.png", "16:9", "wide gameplay background with depth, environment layers, cinematic composition, rich details, usable behind a canvas game. " + common_style),
+        ("sprites.png", "1:1", "sprite sheet concept art containing the main playable character plus enemies/objects from the request, full body, readable silhouettes, multiple poses, game-ready. " + common_style),
+        ("title.png", "16:9", "dramatic title/menu key art for the game, clean focal composition, no text, attractive first screen. " + common_style),
+    ]
+    print("Generating MiniMax image/music assets...")
+    for filename, aspect, prompt in image_jobs:
+        try:
+            asset = generate_image_asset(assets_dir, filename, prompt, aspect)
+            manifest["images"].append(asset)
+            print(f"  Asset image: {asset['path']}")
+        except Exception as exc:
+            msg = f"{filename}: {exc}"
+            manifest["errors"].append(msg)
+            print(f"  Asset image failed: {msg}")
+
+    music_prompt = (
+        f"Instrumental looping game soundtrack for {title}. {description}. "
+        f"Theme {theme}. Energetic, polished, suitable for browser arcade gameplay, no vocals."
+    )
+    try:
+        asset = generate_music_asset(assets_dir, "theme.mp3", music_prompt)
+        manifest["audio"].append(asset)
+        print(f"  Asset music: {asset['path']}")
+    except Exception as exc:
+        msg = f"theme.mp3: {exc}"
+        manifest["errors"].append(msg)
+        print(f"  Asset music failed: {msg}")
+
+    manifest["enabled"] = bool(manifest["images"] or manifest["audio"])
+    (assets_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if REQUIRE_GENERATED_ASSETS and len(manifest["images"]) < 2:
+        raise RuntimeError("Generated bitmap assets are required; fewer than 2 MiniMax image assets were created")
+    return manifest
+
+
+def asset_instructions(manifest):
+    if not manifest or not manifest.get("enabled"):
+        return ""
+    lines = [
+        "Generated asset pipeline:",
+        "The following MiniMax-generated local assets already exist beside index.html and will be deployed with the game.",
+    ]
+    for asset in manifest.get("images", []):
+        lines.append(f"- Image: {asset['path']}")
+    for asset in manifest.get("audio", []):
+        lines.append(f"- Music: {asset['path']}")
+    lines.extend([
+        "Asset usage requirements:",
+        "- Preload and draw generated PNG assets with Image() and ctx.drawImage().",
+        "- Use assets/background.png or assets/title.png as the visible menu/game background, not a flat color field.",
+        "- Use assets/sprites.png for the main character, enemies, vehicles, bosses, props, or other primary subjects. Crop regions from the sheet if needed.",
+        "- Do not render primary actors as colored fillRect/strokeRect blocks. Rectangles are allowed only for collision math, UI bars, particles, or minor props.",
+        "- If assets/theme.mp3 exists, create an Audio object or <audio> element, start it after the user's start action, loop it, and add volume control/mute handling.",
+        "- WebAudio sound effects are still expected for hits, jumps, pickups, crashes, shots, or UI feedback.",
+        "- If a generated asset fails to load at runtime, use a graceful fallback, but the normal path must visibly use the generated assets.",
+    ])
+    return "\n".join(lines) + "\n"
 
 
 def with_ipv4_dns(fn):
@@ -301,7 +496,7 @@ def run_playtester(slug):
     return (int(m.group(1)) if m else 0), output
 
 
-def write_metadata(output_dir, description, title, theme, user_id):
+def write_metadata(output_dir, description, title, theme, user_id, asset_manifest=None):
     metadata = {
         "description": description,
         "title": title,
@@ -309,11 +504,12 @@ def write_metadata(output_dir, description, title, theme, user_id):
         "user_id": user_id,
         "created_at": int(time.time()),
         "quality_threshold": QUALITY_THRESHOLD,
+        "assets": asset_manifest or {},
     }
     Path(output_dir, "gameforge.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def build_prompt(description, title, theme, user_id=None, retry_feedback=""):
+def build_prompt(description, title, theme, user_id=None, retry_feedback="", asset_manifest=None):
     colors = THEME_COLORS.get(theme, THEME_COLORS["minimal"])
     return BASE_PROMPT.format(
         description=description,
@@ -323,6 +519,7 @@ def build_prompt(description, title, theme, user_id=None, retry_feedback=""):
         prompt_improvements=get_prompt_improvements(),
         genre_requirements=genre_requirements(description),
         retry_feedback=retry_feedback,
+        asset_instructions=asset_instructions(asset_manifest),
         **colors,
     )
 
@@ -331,7 +528,8 @@ def generate(description, title, theme, output_dir, user_id=None):
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     slug = output_path.name
-    write_metadata(output_path, description, title, theme, user_id)
+    asset_manifest = build_asset_pack(output_path, description, title, theme)
+    write_metadata(output_path, description, title, theme, user_id, asset_manifest)
 
     print(f"Generating: {title} ({theme})")
     print(f"Description: {description}")
@@ -345,7 +543,7 @@ def generate(description, title, theme, output_dir, user_id=None):
 
     for attempt in range(1, MAX_ATTEMPTS + 1):
         print(f"Attempt {attempt}/{MAX_ATTEMPTS}")
-        prompt = build_prompt(description, title, theme, user_id, retry_feedback)
+        prompt = build_prompt(description, title, theme, user_id, retry_feedback, asset_manifest)
         t0 = time.time()
         try:
             raw, usage = call_llm(prompt)

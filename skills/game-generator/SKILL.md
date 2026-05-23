@@ -16,7 +16,7 @@ triggers:
 
 # Game Generator Skill
 
-Создаёт ЛЮБУЮ HTML5-игру по описанию. AI пишет код сам через MiniMax API — никаких шаблонов.
+Создаёт ЛЮБУЮ HTML5-игру по описанию. AI пишет код сам через MiniMax API — никаких шаблонов. Перед кодом генератор создаёт MiniMax bitmap/music assets и заставляет игру использовать их.
 
 ## Алгоритм (выполняй строго по шагам)
 
@@ -52,7 +52,7 @@ python3 /root/.openclaw/workspace/skills/game-generator/scripts/generate_game.py
   "{user_id}"
 ```
 
-Скрипт вызывает MiniMax API, получает HTML5 код, сохраняет index.html.
+Скрипт вызывает MiniMax image_generation/music_generation для PNG/MP3 ассетов, затем MiniMax text API для HTML5 кода, сохраняет index.html и assets/.
 Автоматически читает feedback пользователя и добавляет в промпт.
 Автоматически запускает playtester и логирует в observability.
 
@@ -99,17 +99,28 @@ python3 /root/.openclaw/workspace/skills/rate-limiter/scripts/rate_limit.py rele
 | neon | Зелёный неон | #00ff41, #00cc33 на #000000 |
 | minimal | Минимализм | #ff4444, #cc0000 на #0d1117 |
 
+
+## Обязательная asset pipeline
+
+- Сначала генерируются MiniMax изображения: фон, sprite sheet, title/menu art.
+- Затем генерируется MiniMax instrumental music track.
+- Код игры обязан загружать PNG через `Image()` и рисовать через `ctx.drawImage()`.
+- Код игры обязан запускать `assets/theme.mp3` после действия пользователя, если файл создан.
+- Главный герой, враги, машины, боссы и ключевые объекты НЕ должны быть простыми `fillRect`/`strokeRect` квадратами.
+- Если generated assets не создались и `GAMEFORGE_REQUIRE_GENERATED_ASSETS=1`, игру не деплоить.
+- QA должен валить игру, если ассеты есть в manifest, но HTML их не использует.
+
 ## Требования к генерируемой игре
 
 Каждая игра ОБЯЗАНА содержать:
-- `<!DOCTYPE html>` + весь код в одном файле
+- `<!DOCTYPE html>` + основной код в `index.html`; локальные generated assets в `assets/` обязательны, если MiniMax asset API доступен
 - `<canvas>` элемент для рендеринга
 - `requestAnimationFrame` game loop
 - Экран старта: "Press Enter to start"
 - Экран game over со счётом
 - Управление клавиатурой (стрелки / WASD)
 - Отображение счёта во время игры
-- Без внешних библиотек, без CDN
+- Без внешних библиотек, без CDN, но с локальными `assets/background.png`, `assets/sprites.png`, `assets/title.png`, `assets/theme.mp3` когда они сгенерированы
 
 ## Правила
 

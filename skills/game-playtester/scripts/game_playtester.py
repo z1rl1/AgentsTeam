@@ -75,6 +75,51 @@ def has_core_gameplay_depth(code):
     return sum(1 for pat in mechanics if has(pat, code)) >= 5
 
 
+
+
+def asset_section(meta):
+    if not isinstance(meta, dict):
+        return {}
+    if isinstance(meta.get('assets'), dict):
+        return meta.get('assets') or {}
+    if 'images' in meta or 'audio' in meta:
+        return meta
+    return {}
+
+
+def generated_image_paths(meta):
+    assets = asset_section(meta)
+    return [a.get('path') for a in assets.get('images', []) if a.get('path')]
+
+
+def generated_audio_paths(meta):
+    assets = asset_section(meta)
+    return [a.get('path') for a in assets.get('audio', []) if a.get('path')]
+
+
+def uses_generated_images(code, meta):
+    paths = generated_image_paths(meta)
+    if not paths:
+        return False
+    mentioned = sum(1 for path in paths if path in code)
+    return mentioned >= min(2, len(paths)) and has(r'new\s+Image\s*\(|drawImage\s*\(', code)
+
+
+def uses_generated_music(code, meta):
+    paths = generated_audio_paths(meta)
+    if not paths:
+        return False
+    return any(path in code for path in paths) and has(r'new\s+Audio\s*\(|<audio|\.play\s*\(|loop\s*=', code)
+
+
+def avoids_rectangle_only_actors(code, meta):
+    if generated_image_paths(meta):
+        draw_images = len(re.findall(r'\.drawImage\s*\(', code))
+        return draw_images >= 3
+    fill_rects = len(re.findall(r'\.fillRect\s*\(', code))
+    organic = len(re.findall(r'\.drawImage\s*\(|\.ellipse\s*\(|\.arc\s*\(|bezierCurveTo|quadraticCurveTo', code))
+    return organic >= 18 and fill_rects <= organic * 3
+
 def genre_checks(description, slug, code):
     d = f'{description} {slug}'.lower()
     checks = []
@@ -135,6 +180,9 @@ def test_game(slug):
         ('Core gameplay depth', None, True, False),
         ('Multiple entities/systems', None, True, False),
         ('Rich canvas drawing', None, True, False),
+        ('Generated bitmap/image assets', None, True, False),
+        ('Generated music asset', None, False, False),
+        ('Not rectangle-only actors', None, True, False),
         ('Animated visual effects', r'particle|spark|shake|flash|trail|glow|shadowBlur|animation|frame|pulse', False, False),
         ('No blocking dialogs', r'alert\s*[(]|prompt\s*[(]|confirm\s*[(]', True, True),
         ('No external dependencies', r'https?://|cdn\.|<script\s+src=|<link\s+[^>]*href=', True, True),
@@ -159,6 +207,12 @@ def test_game(slug):
             found = count_arrays_and_entities(code) >= 12
         elif name == 'Rich canvas drawing':
             found = count_draw_calls(code) >= 55
+        elif name == 'Generated bitmap/image assets':
+            found = uses_generated_images(code, meta) if generated_image_paths(meta) else True
+        elif name == 'Generated music asset':
+            found = uses_generated_music(code, meta) if generated_audio_paths(meta) else True
+        elif name == 'Not rectangle-only actors':
+            found = avoids_rectangle_only_actors(code, meta)
         else:
             found = has(pat, code)
         ok = (not found) if invert else found
