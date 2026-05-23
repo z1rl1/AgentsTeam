@@ -11,6 +11,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 import urllib.request, urllib.error
 import socket
+import fcntl
+from contextlib import contextmanager
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
 
@@ -42,6 +44,7 @@ MINIMAX_ASSET_TIMEOUT_SECONDS = int(os.environ.get("MINIMAX_ASSET_TIMEOUT_SECOND
 GENERATE_ASSETS = os.environ.get("GAMEFORGE_GENERATE_ASSETS", "1").lower() not in {"0", "false", "no", "off"}
 REQUIRE_GENERATED_ASSETS = os.environ.get("GAMEFORGE_REQUIRE_GENERATED_ASSETS", "1").lower() not in {"0", "false", "no", "off"}
 ASSET_WORKERS = int(os.environ.get("GAMEFORGE_ASSET_WORKERS", "4"))
+GENERATION_LOCK_TIMEOUT_SECONDS = int(os.environ.get("GAMEFORGE_LOCK_TIMEOUT_SECONDS", "900"))
 if REQUIRE_GENERATED_ASSETS and not GENERATE_ASSETS:
     print("GAMEFORGE_GENERATE_ASSETS=0 ignored because generated assets are required")
     GENERATE_ASSETS = True
@@ -527,6 +530,49 @@ def run_playtester(slug):
     return (int(m.group(1)) if m else 0), output
 
 
+@contextmanager
+def generation_lock(output_path):
+    lock_path = output_path / ".gameforge.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    lock_file = lock_path.open("w", encoding="utf-8")
+    start = time.time()
+    announced = False
+    try:
+        while True:
+            try:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                lock_file.seek(0)
+                lock_file.truncate()
+                lock_file.write(f"pid={os.getpid()} started={int(time.time())}\n")
+                lock_file.flush()
+                return_value = yield
+                return return_value
+            except BlockingIOError:
+                if not announced:
+                    print(f"Another generation is already running for {output_path.name}; waiting instead of starting a duplicate.")
+                    announced = True
+                if time.time() - start > GENERATION_LOCK_TIMEOUT_SECONDS:
+                    raise RuntimeError(f"Timed out waiting for generation lock: {lock_path}")
+                time.sleep(3)
+    finally:
+        try:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+        except Exception:
+            pass
+        lock_file.close()
+
+
+def existing_game_ready(output_path):
+    if not (output_path / "index.html").exists() or not (output_path / "gameforge.json").exists():
+        return False
+    score, report = run_playtester(output_path.name)
+    if score >= QUALITY_THRESHOLD:
+        print(f"Existing game already READY: {score}% >= {QUALITY_THRESHOLD}%")
+        print(report)
+        return True
+    return False
+
+
 def write_metadata(output_dir, description, title, theme, user_id, asset_manifest=None):
     metadata = {
         "description": description,
@@ -558,6 +604,13 @@ def build_prompt(description, title, theme, user_id=None, retry_feedback="", ass
 def generate(description, title, theme, output_dir, user_id=None):
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
+    with generation_lock(output_path):
+        if existing_game_ready(output_path):
+            return True
+        return generate_locked(description, title, theme, output_path, user_id)
+
+
+def generate_locked(description, title, theme, output_path, user_id=None):
     slug = output_path.name
     asset_manifest = build_asset_pack(output_path, description, title, theme)
     write_metadata(output_path, description, title, theme, user_id, asset_manifest)
