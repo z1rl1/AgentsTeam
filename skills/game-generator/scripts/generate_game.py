@@ -99,8 +99,10 @@ Art direction and layout rules:
 - Use modern readable typography: system-ui, Segoe UI, Inter/Arial/sans-serif style, consistent sizes, text shadows/outlines only where they improve contrast.
 - Build real UI composition: title screen, HUD, buttons/prompts, progress panels, health/score/lives indicators with spacing, padding, hierarchy, and no overlap.
 - Keep visual style coherent: generated art, sprites, particles, UI colors, and text should look like one designed game, not unrelated pasted pieces.
-- Avoid neon-green debug UI unless it fits the art direction. Avoid huge crude labels floating over gameplay.
-- Use sprite-sheet cropping for actors and props; if the sheet is imperfect, crop/scale carefully and add canvas polish rather than drawing primitive replacements.
+- Avoid neon-green/debug-magenta UI unless it is a deliberate small accent. Do not draw giant magenta borders, wireframe rectangles, debug grids, hitbox-looking panels, or crude strokeRect HUD boxes.
+- Do not make a collage of random square crops from generated art. Sprite-sheet cropping must be semantic: named crop regions for player/enemy/vehicle/prop states, with consistent scale and silhouette.
+- Use sprite-sheet cropping for actors and props; if the sheet is imperfect, request/repair better assets or crop larger coherent regions rather than pasting tiny unrelated fragments.
+- HUD panels should be designed with filled translucent panels, rounded corners, spacing, icons/bars, and hierarchy; avoid raw outlined boxes with huge labels.
 - The first viewport must look like a finished game screen: attractive background, clear focal point, readable controls, and no distorted assets.
 
 Visual direction:
@@ -406,6 +408,8 @@ def asset_instructions(manifest):
         "- If assets/theme.mp3 exists, create an Audio object or <audio> element, start it after the user's start action, loop it, and add volume control/mute handling.",
         "- WebAudio sound effects are still expected for hits, jumps, pickups, crashes, shots, or UI feedback.",
         "- Use generated images with aspect-ratio-safe cover/contain/crop helpers; never distort full-screen art by blindly stretching it to canvas dimensions.",
+        "- Do not create random square-crop collages from generated art. Use named semantic sprite crops with consistent scale and silhouettes.",
+        "- Do not draw debug-magenta frames, wireframes, hitbox-looking rectangles, or crude outlined HUD boxes.",
         "- Put readable UI over designed panels/overlays. Do not use crude all-caps pixel text as the whole interface unless explicitly requested.",
         "- If a generated asset fails to load at runtime, use a graceful fallback, but the normal path must visibly use the generated assets.",
     ])

@@ -113,10 +113,13 @@ def uses_generated_music(code, meta):
 
 
 def avoids_rectangle_only_actors(code, meta):
-    if generated_image_paths(meta):
-        draw_images = len(re.findall(r'\.drawImage\s*\(', code))
-        return draw_images >= 3
     fill_rects = len(re.findall(r'\.fillRect\s*\(', code))
+    draw_images = len(re.findall(r'\.drawImage\s*\(', code))
+    semantic_sprite_terms = len(re.findall(r'sprite|sheet|atlas|drawSprite|drawActor|drawPlayer|drawEnemy|drawVehicle|drawMeteor|drawDrone|cropSprite|spriteMap', code, re.I))
+    if generated_image_paths(meta):
+        # Three drawImage calls usually means background/title only. Real generated-asset games
+        # need sprites/props/actors drawn repeatedly, not mostly fillRect primitives.
+        return draw_images >= 8 and semantic_sprite_terms >= 6 and fill_rects <= max(24, draw_images * 5)
     organic = len(re.findall(r'\.drawImage\s*\(|\.ellipse\s*\(|\.arc\s*\(|bezierCurveTo|quadraticCurveTo', code))
     return organic >= 18 and fill_rects <= organic * 3
 
@@ -147,6 +150,35 @@ def has_polished_typography(code):
 def has_designed_ui_composition(code):
     terms = len(re.findall(r'hud|panel|overlay|menu|button|health|lives|score|progress|level|objective|controls|pause|volume|mute|roundRect|rgba\(|gradient|shadow', code, re.I))
     return terms >= 18
+
+
+def avoids_debug_neon_frames(code):
+    neon = len(re.findall(r'#ff00ff|#f0f|magenta|rgb\s*\(\s*255\s*,\s*0\s*,\s*255', code, re.I))
+    stroke_rects = len(re.findall(r'\.strokeRect\s*\(', code))
+    debug_terms = len(re.findall(r'debug|grid|wireframe|bounding|hitbox', code, re.I))
+    # A few magenta accents are okay; many stroked magenta boxes read as debug UI.
+    return not (neon >= 1 and stroke_rects >= 5) and debug_terms <= 3
+
+
+def avoids_asset_tile_collage(code, meta):
+    if not generated_image_paths(meta):
+        return True
+    draw_images = len(re.findall(r'\.drawImage\s*\(', code))
+    nine_arg = len(re.findall(r'drawImage\s*\([^)]*,[^)]*,[^)]*,[^)]*,[^)]*,[^)]*,[^)]*,[^)]*,[^)]*\)', code, re.I | re.S))
+    crop_terms = len(re.findall(r'sprite|frame|sheet|crop|source|sx\b|sy\b|tile|segment|slice|region', code, re.I))
+    # If almost every image draw is a 9-arg crop and there is little semantic sprite mapping,
+    # the result often becomes random square snippets of generated art pasted onto the screen.
+    semantic_terms = len(re.findall(r'playerSprite|enemySprite|vehicleSprite|meteorSprite|droneSprite|drawPlayer|drawEnemy|drawVehicle|drawActor|drawBackground|drawCover|drawContain|spriteMap|atlas', code, re.I))
+    random_crop_heavy = draw_images >= 10 and nine_arg >= max(8, int(draw_images * 0.7)) and semantic_terms < 5
+    return not random_crop_heavy and crop_terms <= 120
+
+
+def avoids_crude_hud_boxes(code):
+    stroke_rects = len(re.findall(r'\.strokeRect\s*\(', code))
+    round_rects = len(re.findall(r'\.roundRect\s*\(', code))
+    fills = len(re.findall(r'rgba\(|createLinearGradient|shadowBlur|globalAlpha', code, re.I))
+    # Thin stroked rectangles are allowed for bars, but HUD panels should use filled/rounded/gradient treatment.
+    return stroke_rects <= 3 or round_rects >= 2
 
 def genre_checks(description, slug, code):
     d = f'{description} {slug}'.lower()
@@ -214,6 +246,9 @@ def test_game(slug):
         ('No distorted asset stretching', None, True, False),
         ('Polished readable typography', None, True, False),
         ('Designed UI composition', None, True, False),
+        ('No debug neon frames', None, True, False),
+        ('No random asset tile collage', None, True, False),
+        ('No crude HUD boxes', None, True, False),
         ('Animated visual effects', r'particle|spark|shake|flash|trail|glow|shadowBlur|animation|frame|pulse', False, False),
         ('No blocking dialogs', r'alert\s*[(]|prompt\s*[(]|confirm\s*[(]', True, True),
         ('No external dependencies', r'https?://|cdn\.|<script\s+src=|<link\s+[^>]*href=', True, True),
@@ -250,6 +285,12 @@ def test_game(slug):
             found = has_polished_typography(code)
         elif name == 'Designed UI composition':
             found = has_designed_ui_composition(code)
+        elif name == 'No debug neon frames':
+            found = avoids_debug_neon_frames(code)
+        elif name == 'No random asset tile collage':
+            found = avoids_asset_tile_collage(code, meta)
+        elif name == 'No crude HUD boxes':
+            found = avoids_crude_hud_boxes(code)
         else:
             found = has(pat, code)
         ok = (not found) if invert else found

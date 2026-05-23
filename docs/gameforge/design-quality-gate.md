@@ -34,6 +34,10 @@ This document translates external game UI/UX, accessibility, canvas image, and g
    - AI key art can be visually inconsistent, noisy, or poorly framed. The game must crop, layer, tint, mask, and compose it rather than paste it full-screen.
    - Encoding for agents: generated image use must be deliberate: crop actors from sprite sheets, use background as layered scenery or title art, add overlays/lighting/UI separately.
 
+8. Avoid asset-collage failure modes.
+   - A game can technically use generated assets while still looking awful: random square crops, stretched key art, magenta debug frames, and crude HUD boxes are failures.
+   - Encoding for agents: require semantic crop maps, coherent actor scale, filled/rounded UI panels, and no visible debug framing.
+
 ## Agent Prompt Contract
 
 Every GameForge generation prompt must include:
@@ -46,7 +50,7 @@ Every GameForge generation prompt must include:
 - UI must use readable sans/system font stack, not global crude pixel monospace.
 - Important text must live on panels, scrims, or outlined/shadowed regions with clear contrast.
 - Render in layers: background, parallax/midground, gameplay, effects, HUD, menu/modal.
-- No debug-looking HUD, giant neon labels, overlapping text, or raw text pasted onto noisy image areas.
+- No debug-looking HUD, giant neon labels, overlapping text, raw text pasted onto noisy image areas, magenta wireframe borders, or random square-crop asset collages.
 - Include game feel: particles, short proportional screen shake, animation states, audio feedback, and state transitions.
 
 ## Static QA Rules
@@ -58,6 +62,8 @@ The static playtester should fail deploy when:
 - Primary actors are still rectangle-only.
 - UI lacks readable typography signals: system/sans font stack, panels/overlays, text alignment, shadows/outlines, or hierarchy.
 - HUD/menu composition lacks grouped score/health/lives/objective/progress/control regions.
+- The screen uses generated assets as random square tiles/collage instead of coherent actors/backgrounds.
+- The HUD uses crude debug-looking strokeRect boxes or dominant magenta wireframes.
 - Code has too few draw calls, entities, visual systems, or feedback systems.
 
 ## Visual QA Roadmap
