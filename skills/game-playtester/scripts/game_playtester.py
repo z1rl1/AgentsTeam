@@ -120,6 +120,34 @@ def avoids_rectangle_only_actors(code, meta):
     organic = len(re.findall(r'\.drawImage\s*\(|\.ellipse\s*\(|\.arc\s*\(|bezierCurveTo|quadraticCurveTo', code))
     return organic >= 18 and fill_rects <= organic * 3
 
+
+def avoids_naive_asset_stretch(code, meta):
+    if not generated_image_paths(meta):
+        return True
+    # Full-canvas drawImage without cover/crop/aspect helpers often distorts generated art.
+    naive_patterns = [
+        r'drawImage\s*\([^,]+,\s*0\s*,\s*0\s*,\s*canvas\.width\s*,\s*canvas\.height\s*\)',
+        r'drawImage\s*\([^,]+,\s*0\s*,\s*0\s*,\s*w\s*,\s*h\s*\)',
+        r'drawImage\s*\([^,]+,\s*0\s*,\s*0\s*,\s*WIDTH\s*,\s*HEIGHT\s*\)',
+    ]
+    naive = any(has(pat, code) for pat in naive_patterns)
+    cover_terms = len(re.findall(r'cover|contain|aspect|ratio|crop|sourceX|sourceY|sourceW|sourceH|sx\b|sy\b|sWidth|sHeight|parallax|layer', code, re.I))
+    nine_arg_draw = bool(re.search(r'drawImage\s*\([^)]*,[^)]*,[^)]*,[^)]*,[^)]*,[^)]*,[^)]*,[^)]*,[^)]*\)', code, re.I | re.S))
+    return (not naive) or cover_terms >= 4 or nine_arg_draw
+
+
+def has_polished_typography(code):
+    clean_fonts = len(re.findall(r'system-ui|Segoe UI|Inter|Arial|Helvetica|sans-serif', code, re.I))
+    ui_polish = len(re.findall(r'textAlign|textBaseline|shadowColor|shadowBlur|strokeText|roundRect|rgba\(|linearGradient|letterSpacing|fontWeight|panel|button|hud|overlay', code, re.I))
+    crude_fonts = len(re.findall(r'monospace|Courier|Press Start|pixel', code, re.I))
+    giant_caps = len(re.findall(r'ctx\.font\s*=\s*[`\"\'][^`\"\']*(?:48|56|64|72|80)px[^`\"\']*(?:monospace|Courier|pixel)', code, re.I))
+    return clean_fonts >= 1 and ui_polish >= 8 and giant_caps == 0 and crude_fonts <= max(3, clean_fonts + 4)
+
+
+def has_designed_ui_composition(code):
+    terms = len(re.findall(r'hud|panel|overlay|menu|button|health|lives|score|progress|level|objective|controls|pause|volume|mute|roundRect|rgba\(|gradient|shadow', code, re.I))
+    return terms >= 18
+
 def genre_checks(description, slug, code):
     d = f'{description} {slug}'.lower()
     checks = []
@@ -183,6 +211,9 @@ def test_game(slug):
         ('Generated bitmap/image assets', None, True, False),
         ('Generated music asset', None, False, False),
         ('Not rectangle-only actors', None, True, False),
+        ('No distorted asset stretching', None, True, False),
+        ('Polished readable typography', None, True, False),
+        ('Designed UI composition', None, True, False),
         ('Animated visual effects', r'particle|spark|shake|flash|trail|glow|shadowBlur|animation|frame|pulse', False, False),
         ('No blocking dialogs', r'alert\s*[(]|prompt\s*[(]|confirm\s*[(]', True, True),
         ('No external dependencies', r'https?://|cdn\.|<script\s+src=|<link\s+[^>]*href=', True, True),
@@ -213,6 +244,12 @@ def test_game(slug):
             found = uses_generated_music(code, meta) if generated_audio_paths(meta) else True
         elif name == 'Not rectangle-only actors':
             found = avoids_rectangle_only_actors(code, meta)
+        elif name == 'No distorted asset stretching':
+            found = avoids_naive_asset_stretch(code, meta)
+        elif name == 'Polished readable typography':
+            found = has_polished_typography(code)
+        elif name == 'Designed UI composition':
+            found = has_designed_ui_composition(code)
         else:
             found = has(pat, code)
         ok = (not found) if invert else found

@@ -55,3 +55,14 @@ Usage: вставить в <style> или нарисовать через ctx.dr
 - CSS/SVG/Canvas эффекты разрешены для частиц, света, UI, hit flashes и fallback.
 - Каждый asset brief должен явно говорить: no text, no watermark, readable silhouettes, game-ready.
 - Обязательно укажи, какие `assets/*.png` должны быть загружены и где рисуются через `ctx.drawImage()`.
+
+
+## Art Direction Rules
+
+- Generated images are raw material, not final layout. Never stretch key art blindly; preserve aspect ratio using cover/contain/crop math.
+- Backgrounds should be composed in layers: far background, midground, gameplay plane, foreground details, particles/light.
+- Sprite sheets must be cropped into readable actors; do not replace bad crops with simple squares/circles.
+- UI must be designed separately from gameplay art: readable sans/system font, panels/overlays, consistent spacing, contrast, no overlap.
+- Pixel/monospace fonts are accents only unless the user explicitly asks for pure pixel art.
+- Avoid raw neon-green debug HUDs, huge labels over gameplay, and text pasted directly on noisy generated art.
+- If an asset looks visually incompatible, prompt MiniMax for a cleaner replacement rather than forcing it into the game.

@@ -91,6 +91,18 @@ Hard requirements:
 Genre requirements:
 {genre_requirements}
 
+Art direction and layout rules:
+- Treat MiniMax images as art assets, not wallpaper to stretch blindly. Preserve aspect ratio with cover/crop math, parallax layers, camera-aware positioning, or cropped sprite regions.
+- Do NOT stretch `assets/background.png` or `assets/title.png` to arbitrary canvas dimensions with distorted proportions. If drawing full-screen, implement a drawCover/drawContain helper that computes source/destination rectangles correctly.
+- Do NOT place raw generated key art behind unreadable text without dark overlays, contrast panels, or composition-safe placement.
+- Do NOT use ugly all-caps pixel/monospace text for the whole UI unless the request explicitly asks for strict pixel art. Retro style can use arcade accents, but HUD/menu text must be clean, readable, aligned, and proportionate.
+- Use modern readable typography: system-ui, Segoe UI, Inter/Arial/sans-serif style, consistent sizes, text shadows/outlines only where they improve contrast.
+- Build real UI composition: title screen, HUD, buttons/prompts, progress panels, health/score/lives indicators with spacing, padding, hierarchy, and no overlap.
+- Keep visual style coherent: generated art, sprites, particles, UI colors, and text should look like one designed game, not unrelated pasted pieces.
+- Avoid neon-green debug UI unless it fits the art direction. Avoid huge crude labels floating over gameplay.
+- Use sprite-sheet cropping for actors and props; if the sheet is imperfect, crop/scale carefully and add canvas polish rather than drawing primitive replacements.
+- The first viewport must look like a finished game screen: attractive background, clear focal point, readable controls, and no distorted assets.
+
 Visual direction:
 Use the theme colors, but avoid empty black space. The first screen must look like a real finished web game with a large playable area, rich scenery, readable HUD, and polished objects.
 
@@ -393,6 +405,8 @@ def asset_instructions(manifest):
         "- Do not render primary actors as colored fillRect/strokeRect blocks. Rectangles are allowed only for collision math, UI bars, particles, or minor props.",
         "- If assets/theme.mp3 exists, create an Audio object or <audio> element, start it after the user's start action, loop it, and add volume control/mute handling.",
         "- WebAudio sound effects are still expected for hits, jumps, pickups, crashes, shots, or UI feedback.",
+        "- Use generated images with aspect-ratio-safe cover/contain/crop helpers; never distort full-screen art by blindly stretching it to canvas dimensions.",
+        "- Put readable UI over designed panels/overlays. Do not use crude all-caps pixel text as the whole interface unless explicitly requested.",
         "- If a generated asset fails to load at runtime, use a graceful fallback, but the normal path must visibly use the generated assets.",
     ])
     return "\n".join(lines) + "\n"
