@@ -1,0 +1,37 @@
+{
+  "description": "Neon space shooter 'Star Frontier'. Top-down. Player spaceship bottom center. WASD/arrows move, space autofire. Enemies from top in waves. 3 types: small zigzag (1hp), cruiser shoots back (3hp), boss every 5 waves (20hp, 3 patterns). Powerups: shield 5s, triple shot 10s, speed x2. Parallax stars, muzzle flash, 20+ particle explosions, screen shake on hit, fire trail. HUD: lives icons, score center, wave right, boss bar bottom. Title screen, ESC pause, game over screen. Music from start. Difficulty scales 5% per wave. Combo multiplier. Space theme, dark blue, neon cyan player, red enemies.",
+  "title": "Star Frontier",
+  "theme": "space",
+  "user_id": "316330404",
+  "created_at": 1780102389,
+  "quality_threshold": 85,
+  "assets": {
+    "enabled": true,
+    "required": true,
+    "images": [
+      {
+        "type": "image",
+        "path": "assets/background.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/sprites.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/title.png",
+        "source": "minimax-base64"
+      }
+    ],
+    "audio": [
+      {
+        "type": "music",
+        "path": "assets/theme.mp3",
+        "source": "minimax-hex"
+      }
+    ],
+    "errors": []
+  }
+}

@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mario Bros: Mushroom Kingdom</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #1a0a00;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #gameCanvas {
+            background: #1a0a00;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        #muteBtn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,102,0,0.8);
+            color: #ffcc00;
+            border: 2px solid #ff9900;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            z-index: 100;
+        }
+        #muteBtn:hover { background: rgba(255,153,0,0.9); }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <button id="muteBtn">🔊 Sound</button>
+    </div>
+
+    <script>
+    // ============================================
+    // MARIO BROS: MUSHROOM KINGDOM
+    // Complete HTML5 Platformer Game
+    // ============================================
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const muteBtn = document.getElementById('muteBtn');
+
+    // Game Constants
+    const GAME_WIDTH = 960;
+    const GAME_HEIGHT = 540;
+    const TILE_SIZE = 32;
+    const GRAVITY = 0.6;
+    const FRICTION = 0.85;
+
+    // Colors from theme
+    const COLORS = {
+        bg: '#1a0a00',
+        primary: '#ff6600',
+        secondary: '#cc4400',
+        accent: '#ff9900',
+        text: '#ffcc00'
+    };
+
+    // Game State
+    let gameState = 'menu'; // menu, playing, gameover, win
+    let score = 0;
+    let lives = 3;
+    let currentLevel = 1;
+    let cameraX = 0;
+    let lastTime = 0;
+    let particles = [];
+    let effects = [];
+    let screenShake = 0;
+
+    // Audio Context
+    let audioCtx = null;
+    let soundEnabled = true;
+    let musicPlaying = false;
+
+    // ============================================
+    // SPRITE SHEET MANAGER
+    // ============================================
+    class SpriteSheet {
+        constructor(src) {
+            this.image = new Image();
+            this.image.src = src;
+            this.loaded = false;
+            this.image.onload = () => { this.loaded = true; };
+        }
+
+        draw(ctx, sx, sy, sw, sh, dx, dy, dw, dh, flip = false) {
+            if (!this.loaded) return;
+            ctx.save();
+            if (flip) {
+                ctx.translate(dx + dw, dy);
+                ctx.scale(-1, 1);
+                ctx.drawImage(this.image, sx, sy, sw, sh, 0, 0, dw, dh);
+            } else {
+                ctx.drawImage(this.image, sx, sy, sw, sh, dx, dy, dw, dh);
+            }
+            ctx.restore();
+        }
+    }
+
+    // Load sprites
+    const sprites = new SpriteSheet('assets/sprites.png');
+    const background = new SpriteSheet('assets/background.png');
+    const titleImage = new SpriteSheet('assets/title.png');
+
+    // ============================================
+    // LEVEL DATA
+    // ============================================
+    const levels = [
+        // Level 1 - Grassland
+        {
+            width: 200,
+            height: 17,
+            background: [
+                { type: 'cloud', x: 50, y: 80 },
+                { type: 'cloud', x: 200, y: 60 },
+                { type: 'cloud', x: 400, y: 90 },
+                { type: 'cloud', x: 600, y: 50 },
+                { type: 'cloud', x: 800, y: 70 },
+                { type: 'bush', x: 100, y: 452 },
+                { type: 'bush', x: 350, y: 452 },
+                { type: 'bush', x: 600, y: 452 },
+                { type: 'bush', x: 900, y: 452 },
+                { type: 'hill', x: 150, y: 468 },
+                { type: 'hill', x: 500, y: 468 },
+                { type: 'hill', x: 850, y: 468 }
+            ],
+            enemies: [
+                { type: 'goomba', x: 180, y: 452 },
+                { type: 'goomba', x: 350, y: 452 },
+                { type: 'goomba', x: 550, y: 452 },
+                { type: 'koopa', x: 420, y: 452 },
+                { type: 'goomba', x: 700, y: 452 },
+                { type: 'koopa', x: 850, y: 452 },
+                { type: 'goomba', x: 1050, y: 452 },
+                { type: 'goomba', x: 1200, y: 452 }
+            ],
+            powerups: [
+                { type: 'mushroom', x: 230, y: 388 },
+                { type: 'flower', x: 620, y: 388 }
+            ],
+            goal: { x: 6200, y: 452 }
+        },
+        // Level 2 - Underground
+        {
+            width: 200,
+            height: 17,
+            background: [
+                { type: 'pipe', x: 150, y: 388 },
+                { type: 'pipe', x: 350, y: 388 },
+                { type: 'pipe', x: 600, y: 388 },
+                { type: 'chain', x: 250, y: 200 },
+                { type: 'chain', x: 450, y: 200 },
+                { type: 'chain', x: 650, y: 200 }
+            ],
+            enemies: [
+                { type: 'goomba', x: 200, y: 452 },
+                { type: 'koopa', x: 400, y: 388 },
+                { type: 'goomba', x: 500, y: 452 },
+                { type: 'koopa', x: 700, y: 388 },
+                { type: 'goomba', x: 900, y: 452 },
+                { type: 'koopa', x: 1100, y: 388 },
+                { type: 'goomba', x: 1300, y: 452 }
+            ],
+            powerups: [
+                { type: 'mushroom', x: 280, y: 324 },
+                { type: 'flower', x: 520, y: 260 }
+            ],
+            goal: { x: 6200, y: 452 }
+        },
+        // Level 3 - Castle
+        {
+            width: 200,
+            height: 17,
+            background: [
+                { type: 'torch', x: 100, y: 350 },
+                { type: 'torch', x: 300, y: 350 },
+                { type: 'torch', x: 500, y: 350 },
+                { type: 'torch', x: 700, y: 350 },
+                { type: 'flag', x: 6100, y: 100 }
+            ],
+            enemies: [
+                { type: 'goomba', x: 150, y: 452 },
+                { type: 'koopa', x: 250, y: 452 },
+                { type: 'goomba', x: 400, y: 452 },
+                { type: 'goomba', x: 550, y: 452 },
+                { type: 'koopa', x: 650, y: 388 },
+                { type: 'goomba', x: 800, y: 452 },
+                { type: 'koopa', x: 950, y: 452 },
+                { type: 'goomba', x: 1100, y: 388 },
+                { type: 'koopa', x: 1250, y: 452 }
+            ],
+            powerups: [
+                { type: 'flower', x: 300, y: 324 },
+                { type: 'mushroom', x: 650, y: 324 },
+                { type: 'flower', x: 1050, y: 324 }
+            ],
+            goal: { x: 6200, y: 100 }
+        }
+    ];
+
+    // ============================================
+    // LEVEL MAP GENERATION
+    // ============================================
+    function generateLevel(levelIndex) {
+        const level = levels[levelIndex];
+        const map = [];
+        
+        for (let y = 0; y < level.height; y++) {
+            map[y] = [];
+            for (let x = 0; x < level.width; x++) {
+                if (y === level.height - 1) {
+                    map[y][x] = 2; // Ground
+                } else if (y === 0) {
+                    map[y][x] = 1; // Ceiling
+                } else {
+                    map[y][x] = 0; // Air
+                }
+            }
+        }
+
+        // Add ground variations
+        for (let x = 10; x < 30; x++) {
+            if (x !== 20) map[15][x] = 0;
+        }
+        for (let x = 50; x < 70; x++) {
+            if (x !== 60) map[15][x] = 0;
+        }
+        for (let x = 90; x < 100; x++) {
+            map[14][x] = 2;
+            map[15][x] = 2;
+        }
+        for (let x = 130; x < 150; x++) {
+            if (x !== 140) map[15][x] = 0;
+        }
+
+        // Add brick platforms
+        const platforms = [
+            { x: 5, y: 12, width: 4 },
+            { x: 12, y: 10, width: 3 },
+            { x: 20, y: 12, width: 5 },
+            { x: 35, y: 10, width: 4 },
+            { x: 45, y: 8, width: 3 },
+            { x: 55, y: 10, width: 4 },
+            { x: 70, y: 12, width: 6 },
+            { x: 85, y: 10, width: 3 },
+            { x: 100, y: 8, width: 4 },
+            { x: 115, y: 10, width: 3 },
+            { x: 130, y: 12, width: 5 },
+            { x: 145, y: 10, width: 4 },
+            { x: 160, y: 8, width: 3 },
+            { x: 175, y: 10, width: 5 },
+            { x: 190, y: 12, width: 8 }
+        ];
+
+        platforms.forEach(p => {
+            for (let i = 0; i < p.width; i++) {
+                if (p.y < level.height && p.x + i < level.width) {
+                    map[p.y][p.x + i] = 3; // Brick
+                }
+            }
+        });
+
+        return { map, ...level };
+    }
+
+    // ============================================
+    // PLAYER CLASS
+    // ============================================
+    class Player {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.width = 28;
+            this.height = 32;
+            this.vx = 0;
+            this.vy = 0;
+            this.speed = 4;
+            this.jumpForce = -12;
+            this.grounded = false;
+            this.facing = 1;
+            this.state = 'idle'; // idle, walk, jump, fall
+            this.powerup = 'small'; // small, big, fire
+            this.animFrame = 0;
+            this.animTimer = 0;
+            this.invincible = false;
+            this.invincibleTimer = 0;
+            this.fireballCooldown = 0;
+            this.dead = false;
+            this.reachedGoal = false;
+        }
+
+        update(dt, keys, level) {
+            if (this.dead) {
+                this.vy += GRAVITY;
+                this.y += this.vy;
+                return;
+            }
+
+            // Movement
+            if (keys['ArrowLeft'] || keys['KeyA']) {
+                this.vx -= this.speed * 0.3;
+                this.facing = -1;
+                if (this.grounded) this.state = 'walk';
+            }
+            if (keys['ArrowRight'] || keys['KeyD']) {
+                this.vx += this.speed * 0.3;
+                this.facing = 1;
+                if (this.grounded) this.state = 'walk';
+            }
+
+            // Jump
+            if ((keys['ArrowUp'] || keys['KeyW'] || keys['Space']) && this.grounded) {
+                this.vy = this.jumpForce;
+                this.grounded = false;
+                this.state = 'jump';
+                playSound('jump');
+            }
+
+            // Fireball
+            if (keys['KeyX'] && this.powerup === 'fire' && this.fireballCooldown <= 0) {
+                this.shootFireball();
+                this.fireballCooldown = 30;
+            }
+
+            if (this.fireballCooldown > 0) this.fireballCooldown--;
+
+            // Apply physics
+            this.vx *= FRICTION;
+            this.vy += GRAVITY;
+
+            // Clamp velocity
+            this.vx = Math.max(-8, Math.min(8, this.vx));
+            this.vy = Math.max(-15, Math.min(15, this.vy));
+
+            // Move and collide
+            this.x += this.vx;
+            this.handleCollisionX(level);
+            this.y += this.vy;
+            this.handleCollisionY(level);
+
+            // Update state
+            if (this.grounded) {
+                if (Math.abs(this.vx) > 0.5) {
+                    this.state = 'walk';
+                } else {
+                    this.state = 'idle';
+                }
+            } else {
+                this.state = this.vy < 0 ? 'jump' : 'fall';
+            }
+
+            // Animation
+            this.animTimer++;
+            if (this.animTimer > 8) {
+                this.animTimer = 0;
+                this.animFrame = (this.animFrame + 1) % 4;
+            }
+
+            // Invincibility
+            if (this.invincible) {
+                this.invincibleTimer--;
+                if (this.invincibleTimer <= 0) {
+                    this.invincible = false;
+                }
+            }
+
+            // Fall death
+            if (this.y > GAME_HEIGHT + 100) {
+                this.die();
+            }
+        }
+
+        handleCollisionX(level) {
+            const left = Math.floor(this.x / TILE_SIZE);
+            const right = Math.floor((this.x + this.width) / TILE_SIZE);
+            const top = Math.floor(this.y / TILE_SIZE);
+            const bottom = Math.floor((this.y + this.height - 1) / TILE_SIZE);
+
+            for (let ty = top; ty <= bottom; ty++) {
+                for (let tx = left; tx <= right; tx++) {
+                    if (level.map[ty] && level.map[ty][tx] > 0) {
+                        if (this.vx > 0) {
+                            this.x = tx * TILE_SIZE - this.width;
+                        } else if (this.vx < 0) {
+                            this.x = (tx + 1) * TILE_SIZE;
+                        }
+                        this.vx = 0;
+                    }
+                }
+            }
+        }
+
+        handleCollisionY(level) {
+            const left = Math.floor(this.x / TILE_SIZE);
+            const right = Math.floor((this.x + this.width - 1) / TILE_SIZE);
+            const top = Math.floor(this.y / TILE_SIZE);
+            const bottom = Math.floor((this.y + this.height) / TILE_SIZE);
+
+            this.grounded = false;
+
+            for (let ty = top; ty <= bottom; ty++) {
+                for (let tx = left; tx <= right; tx++) {
+                    const tile = level.map[ty] && level.map[ty][tx] ? level.map[ty][tx] : 0;
+                    if (tile > 0) {
+                        if (this.vy > 0) {
+                            this.y = ty * TILE_SIZE - this.height;
+                            this.vy = 0;
+                            this.grounded = true;
+                        } else if (this.vy < 0) {
+                            this.y = (ty + 1) * TILE_SIZE;
+                            this.vy = 0;
+                            // Hit brick
+                            if (tile === 3) {
+                                this.hitBrick(tx, ty, level);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        hitBrick(tx, ty, level) {
+            // Check if powerup should spawn
+            if (level.powerups.some(p => p.x === tx * TILE_SIZE && p.y === ty * TILE_SIZE)) {
+                level.map[ty][tx] = 0;
+                return;
+            }
+            // Random chance to spawn mushroom
+            if (Math.random() < 0.1) {
+                level.powerups.push({ type: 'mushroom', x: tx * TILE_SIZE, y: ty * TILE_SIZE });
+            }
+            level.map[ty][tx] = 0;
+            createParticles(tx * TILE_SIZE + 16, ty * TILE_SIZE + 16, 8, COLORS.accent);
+            playSound('brick');
+            screenShake = 3;
+        }
+
+        shootFireball() {
+            const fb = {
+                x: this.x + (this.facing > 0 ? this.width : 0),
+                y: this.y + this.height / 2 - 8,
+                vx: this.facing * 8,
+                vy: 0,
+                width: 16,
+                height: 16,
+                bounce: 0
+            };
+            fireballs.push(fb);
+            playSound('shoot');
+        }
+
+        hit() {
+            if (this.invincible) return;
+
+            if (this.powerup === 'fire') {
+                this.powerup = 'big';
+                this.height = 48;
+                this.invincible = true;
+                this.invincibleTimer = 120;
+                screenShake = 10;
+                playSound('hurt');
+            } else if (this.powerup === 'big') {
+                this.powerup = 'small';
+                this.height = 32;
+                this.invincible = true;
+                this.invincibleTimer = 120;
+                screenShake = 10;
+                playSound('hurt');
+            } else {
+                this.die();
+            }
+        }
+
+        die() {
+            if (this.dead) return;
+            this.dead = true;
+            this.vy = -10;
+            playSound('death');
+            lives--;
+            setTimeout(() => {
+                if (lives <= 0) {
+                    gameState = 'gameover';
+                } else {
+                    resetLevel();
+                }
+            }, 2000);
+        }
+
+        grow() {
+            if (this.powerup === 'small') {
+                this.powerup = 'big';
+                this.height = 48;
+                this.y -= 16;
+                playSound('powerup');
+                createParticles(this.x + this.width / 2, this.y + this.height / 2, 15, COLORS.primary);
+            }
+        }
+
+        getFire() {
+            if (this.powerup === 'big') {
+                this.powerup = 'fire';
+                playSound('powerup');
+                createParticles(this.x + this.width / 2, this.y + this.height / 2, 15, '#ff0000');
+            } else {
+                this.grow();
+            }
+        }
+
+        draw(ctx, cameraX) {
+            if (!sprites.loaded) {
+                // Fallback
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(this.x - cameraX, this.y, this.width, this.height);
+                return;
+            }
+
+            const screenX = this.x - cameraX;
+            
+            // Invincibility blink
+            if (this.invincible && Math.floor(this.invincibleTimer / 4) % 2 === 0) {
+                ctx.globalAlpha = 0.5;
+            }
+
+            // Draw sprite based on state
+            let sx = 0, sy = 0, sw = 32, sh = 32;
+            
+            // Determine sprite row based on powerup
+            if (this.powerup === 'fire') {
+                sy = 64;
+            } else if (this.powerup === 'big') {
+                sy = 32;
+            } else {
+                sy = 0;
+            }
+
+            // Animation frames
+            if (this.state === 'idle') {
+                sx = 0;
+            } else if (this.state === 'walk') {
+                sx = 32 + this.animFrame * 32;
+            } else if (this.state === 'jump') {
+                sx = 96;
+            } else if (this.state === 'fall') {
+                sx = 128;
+            }
+
+            // Draw with proper size for big/fire states
+            const drawHeight = this.powerup === 'small' ? 32 : 48;
+            const yOffset = this.powerup === 'small' ? 0 : -16;
+            
+            ctx.save();
+            if (this.facing < 0) {
+                ctx.translate(screenX + this.width, this.y + yOffset);
+                ctx.scale(-1, 1);
+                sprites.draw(ctx, sx, sy, sw, sh, 0, 0, 32, drawHeight, false);
+            } else {
+                sprites.draw(ctx, sx, sy, sw, sh, screenX, this.y + yOffset, 32, drawHeight, false);
+            }
+            ctx.restore();
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    // ============================================
+    // ENEMY CLASSES
+    // ============================================
+    class Enemy {
+        constructor(x, y, type) {
+            this.x = x;
+            this.y = y;
+            this.type = type;
+            this.width = 28;
+            this.height = 28;
+            this.vx = type === 'koopa' ? -1.5 : -1;
+            this.vy = 0;
+            this.state = 'walk'; // walk, flip, shell
+            this.animFrame = 0;
+            this.animTimer = 0;
+            this.shellTimer = 0;
+            this.dead = false;
+        }
+
+        update(dt, level) {
+            if (this.dead) return;
+
+            if (this.state === 'shell' && this.shellTimer > 0) {
+                this.shellTimer--;
+                return;
+            }
+
+            if (this.state === 'flip') {
+                this.vy += GRAVITY;
+                this.y += this.vy;
+                if (this.y > GAME_HEIGHT + 50) {
+                    this.dead = true;
+                }
+                return;
+            }
+
+            // Apply gravity
+            this.vy += GRAVITY;
+            this.vy = Math.min(10, this.vy);
+
+            // Move
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // Ground collision
+            const bottom = Math.floor((this.y + this.height) / TILE_SIZE);
+            const left = Math.floor(this.x / TILE_SIZE);
+            const right = Math.floor((this.x + this.width) / TILE_SIZE);
+
+            if (level.map[bottom] && level.map[bottom][left] > 0) {
+                this.y = bottom * TILE_SIZE - this.height;
+                this.vy = 0;
+            }
+            if (level.map[bottom] && level.map[bottom][right] > 0) {
+                this.y = bottom * TILE_SIZE - this.height;
+                this.vy = 0;
+            }
+
+            // Wall collision - turn around
+            const nextTileX = this.vx > 0 ? right : left;
+            const tileY = Math.floor(this.y / TILE_SIZE);
+            if (level.map[tileY] && level.map[tileY][nextTileX] > 0) {
+                this.vx *= -1;
+            }
+
+            // Animation
+            this.animTimer++;
+            if (this.animTimer > 10) {
+                this.animTimer = 0;
+                this.animFrame = (this.animFrame + 1) % 2;
+            }
+
+            // Fall death
+            if (this.y > GAME_HEIGHT + 100) {
+                this.dead = true;
+            }
+        }
+
+        stomp(player) {
+            if (this.state === 'shell') {
+                if (this.shellTimer <= 0) {
+                    // Kick shell
+                    this.vx = player.facing * 6;
+                    this.shellTimer = 300;
+                    playSound('kick');
+                    score += 100;
+                }
+            } else {
+                this.state = 'flip';
+                this.vy = -8;
+                player.vy = -6;
+                playSound('stomp');
+                score += 200;
+                createParticles(this.x + this.width / 2, this.y + this.height / 2, 10, '#ffffff');
+            }
+        }
+
+        hitByFireball(fb) {
+            this.state = 'flip';
+            this.vy = -8;
+            this.vx = fb.vx > 0 ? 2 : -2;
+            playSound('hit');
+            score += 100;
+        }
+
+        draw(ctx, cameraX) {
+            if (this.dead) return;
+            
+            const screenX = this.x - cameraX;
+            if (screenX < -50 || screenX > GAME_WIDTH + 50) return;
+
+            if (!sprites.loaded) {
+                ctx.fillStyle = this.type === 'goomba' ? '#8B4513' : '#228B22';
+                ctx.fillRect(screenX, this.y, this.width, this.height);
+                return;
+            }
+
+            let sx = this.type === 'goomba' ? 160 : 192;
+            let sy = 0;
+
+            if (this.state === 'walk') {
+                sx += this.animFrame * 32;
+            } else if (this.state === 'shell') {
+                sx = this.type === 'goomba' ? 224 : 224;
+                sy = 32;
+            } else if (this.state === 'flip') {
+                sx = this.type === 'goomba' ? 160 : 192;
+                sy = 64;
+            }
+
+            const flip = this.vx < 0;
+            sprites.draw(ctx, sx, sy, 32, 32, screenX - 2, this.y - 4, 32, 36, flip);
+        }
+    }
+
+    // ============================================
+    // POWERUP CLASS
+    // ============================================
+    class Powerup {
+        constructor(x, y, type) {
+            this.x = x;
+            this.y = y;
+            this.type = type;
+            this.width = 28;
+            this.height = 28;
+            this.vx = type === 'mushroom' ? 2 : 0;
+            this.vy = 0;
+            this.emerging = true;
+            this.emergeTarget = y - TILE_SIZE;
+            this.active = false;
+            this.dead = false;
+        }
+
+        update(dt, level) {
+            if (this.dead) return;
+
+            if (this.emerging) {
+                this.y -= 1;
+                if (this.y <= this.emergeTarget) {
+                    this.emerging = false;
+                    this.active = true;
+                    this.vx = 2;
+                }
+                return;
+            }
+
+            // Physics
+            this.vy += GRAVITY;
+            this.vy = Math.min(8, this.vy);
+
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // Ground collision
+            const bottom = Math.floor((this.y + this.height) / TILE_SIZE);
+            const left = Math.floor(this.x / TILE_SIZE);
+            const right = Math.floor((this.x + this.width) / TILE_SIZE);
+
+            if (level.map[bottom] && (level.map[bottom][left] > 0 || level.map[bottom][right] > 0)) {
+                this.y = bottom * TILE_SIZE - this.height;
+                this.vy = 0;
+            }
+
+            // Wall collision
+            const nextTileX = this.vx > 0 ? right : left;
+            const tileY = Math.floor((this.y + this.height / 2) / TILE_SIZE);
+            if (level.map[tileY] && level.map[tileY][nextTileX] > 0) {
+                this.vx *= -1;
+            }
+
+            // Fall death
+            if (this.y > GAME_HEIGHT + 100) {
+                this.dead = true;
+            }
+        }
+
+        draw(ctx, cameraX) {
+            if (this.dead) return;
+            
+            const screenX = this.x - cameraX;
+            if (screenX < -50 || screenX > GAME_WIDTH + 50) return;
+
+            if (!sprites.loaded) {
+                ctx.fillStyle = this.type === 'mushroom' ? '#ff0000' : '#ff6600';
+                ctx.fillRect(screenX, this.y, this.width, this.height);
+                return;
+            }
+
+            const sx = this.type === 'mushroom' ? 256 : 288;
+            const sy = this.emerging ? 64 : 0;
+
+            sprites.draw(ctx, sx, sy, 32, 32, screenX - 2, this.y - 4, 32, 36, false);
+        }
+    }
+
+    // ============================================
+    // PARTICLE SYSTEM
+    // ============================================
+    function createParticles(x, y, count, color) {
+        for (let i = 0; i < count; i++) {
+            particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.8) * 8,
+                life: 30 + Math.random() * 20,
+                color: color,
+                size: 4 + Math.random() * 4
+            });
+        }
+    }
+
+    function updateParticles() {
+        particles = particles.filter(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.3;
+            p.life--;
+            return p.life > 0;
+        });
+    }
+
+    function drawParticles(ctx, cameraX) {
+        particles.forEach(p => {
+            ctx.fillStyle = p.color;
+            ctx.fillRect(p.x - cameraX - p.size / 2, p.y - p.size / 2, p.size, p.size);
+        });
+    }
+
+    // ============================================
+    // AUDIO SYSTEM
+    // ============================================
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    function playSound(type) {
+        if (!soundEnabled || !audioCtx) return;
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        switch (type) {
+            case 'jump':
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+                break;
+            case 'stomp':
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(50, now + 0.15);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
+                break;
+            case 'brick':
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(300, now);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+                break;
+            case 'powerup':
+                osc.frequency.setValueAtTime(500, now);
+                osc.frequency.setValueAtTime(700, now + 0.1);
+                osc.frequency.setValueAtTime(900, now + 0.2);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+                break;
+            case 'shoot':
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+                break;
+            case 'death':
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.5);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+                break;
+            case 'hit':
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, now);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+                break;
+            case 'win':
+                osc.frequency.setValueAtTime(523, now);
+                osc.frequency.setValueAtTime(659, now + 0.15);
+                osc.frequency.setValueAtTime(784, now + 0.3);
+                osc.frequency.setValueAtTime(1047, now + 0.45);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
+                break;
+            case 'kick':
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.08);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+                break;
+            case 'hurt':
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.setValueAtTime(100, now + 0.15);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+                break;
+        }
+    }
+
+    // ============================================
+    // GAME ENTITIES
+    // ============================================
+    let player;
+    let enemies = [];
+    let powerups = [];
+    let fireballs = [];
+    let currentLevelData;
+
+    // ============================================
+    // LEVEL MANAGEMENT
+    // ============================================
+    function loadLevel(levelIndex) {
+        currentLevel = levelIndex;
+        currentLevelData = generateLevel(levelIndex);
+        player = new Player(64, 388);
+        enemies = [];
+        powerups = [];
+        fireballs = [];
+        cameraX = 0;
+
+        // Spawn enemies
+        currentLevelData.enemies.forEach(e => {
+            enemies.push(new Enemy(e.x, e.y, e.type));
+        });
+
+        // Spawn powerups
+        currentLevelData.powerups.forEach(p => {
+            powerups.push(new Powerup(p.x, p.y, p.type));
+        });
+    }
+
+    function resetLevel() {
+        loadLevel(currentLevel);
+        lives = Math.min(lives, 3);
+    }
+
+    function nextLevel() {
+        if (currentLevel < 3) {
+            currentLevel++;
+            loadLevel(currentLevel);
+            playSound('win');
+        } else {
+            gameState = 'win';
+        }
+    }
+
+    // ============================================
+    // COLLISION DETECTION
+    // ============================================
+    function checkCollision(a, b) {
+        return a.x < b.x + b.width &&
+               a.x + a.width > b.x &&
+               a.y < b.y + b.height &&
+               a.y + a.height > b.y;
+    }
+
+    // ============================================
+    // BACKGROUND DRAWING
+    // ============================================
+    function drawBackground(ctx, cameraX) {
+        if (!background.loaded) {
+            // Fallback gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(1, '#87CEEB');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            return;
+        }
+
+        // Parallax scrolling
+        const level = levels[currentLevel - 1];
+        const parallax1 = cameraX * 0.3;
+        const parallax2 = cameraX * 0.5;
+
+        // Draw background image with parallax
+        ctx.drawImage(background.image, 0, 0, GAME_WIDTH, GAME_HEIGHT, -parallax1 % GAME_WIDTH, 0, GAME_WIDTH, GAME_HEIGHT);
+        ctx.drawImage(background.image, 0, 0, GAME_WIDTH, GAME_HEIGHT, GAME_WIDTH - parallax1 % GAME_WIDTH, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        // Draw level-specific decorations
+        level.background.forEach(item => {
+            const screenX = item.x - parallax2;
+            
+            if (item.type === 'cloud') {
+                drawCloud(ctx, screenX, item.y, 60 + Math.sin(item.x * 0.1) * 5);
+            } else if (item.type === 'bush') {
+                drawBush(ctx, screenX, item.y, 80);
+            } else if (item.type === 'hill') {
+                drawHill(ctx, screenX, item.y, 120);
+            } else if (item.type === 'pipe') {
+                drawPipe(ctx, screenX, item.y, 60);
+            } else if (item.type === 'torch') {
+                drawTorch(ctx, screenX, item.y);
+            } else if (item.type === 'flag') {
+                drawFlag(ctx, screenX, item.y);
+            } else if (item.type === 'chain') {
+                drawChain(ctx, screenX, item.y, 100);
+            }
+        });
+    }
+
+    function drawCloud(ctx, x, y, size) {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(x, y, size * 0.4, 0, Math.PI * 2);
+        ctx.arc(x + size * 0.3, y - size * 0.1, size * 0.35, 0, Math.PI * 2);
+        ctx.arc(x + size * 0.6, y, size * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawBush(ctx, x, y, size) {
+        ctx.fillStyle = '#228B22';
+        ctx.beginPath();
+        ctx.arc(x, y, size * 0.3, Math.PI, 0);
+        ctx.arc(x + size * 0.25, y - size * 0.1, size * 0.3, Math.PI, 0);
+        ctx.arc(x + size * 0.5, y, size * 0.3, Math.PI, 0);
+        ctx.fill();
+        ctx.fillStyle = '#32CD32';
+        ctx.beginPath();
+        ctx.arc(x + size * 0.1, y - size * 0.1, size * 0.15, 0, Math.PI * 2);
+        ctx.arc(x + size * 0.35, y - size * 0.15, size * 0.12, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawHill(ctx, x, y, size) {
+        ctx.fillStyle = '#228B22';
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + size / 2, y - size, x + size, y);
+        ctx.fill();
+        ctx.fillStyle = '#32CD32';
+        ctx.beginPath();
+        ctx.moveTo(x + size * 0.3, y);
+        ctx.quadraticCurveTo(x + size / 2, y - size * 0.6, x + size * 0.7, y);
+        ctx.fill();
+    }
+
+    function drawPipe(ctx, x, y, height) {
+        ctx.fillStyle = '#228B22';
+        ctx.fillRect(x, y - height, 40, height);
+        ctx.fillStyle = '#32CD32';
+        ctx.fillRect(x - 5, y - height, 50, 20);
+        ctx.fillStyle = '#006400';
+        ctx.fillRect(x + 5, y - height + 30, 10, height - 30);
+    }
+
+    function drawTorch(ctx, x, y) {
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(x + 10, y, 20, 80);
+        ctx.fillStyle = '#FF6600';
+        ctx.fillRect(x + 5, y - 20, 30, 30);
+        ctx.fillStyle = '#FFFF00';
+        ctx.beginPath();
+        ctx.arc(x + 20, y - 10, 10 + Math.sin(Date.now() * 0.01) * 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawFlag(ctx, x, y) {
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(x + 15, y, 10, 400);
+        ctx.fillStyle = '#FF0000';
+        const wave = Math.sin(Date.now() * 0.005) * 5;
+        ctx.beginPath();
+        ctx.moveTo(x + 25, y + 10);
+        ctx.lineTo(x + 70 + wave, y + 30);
+        ctx.lineTo(x + 25, y + 50);
+        ctx.fill();
+    }
+
+    function drawChain(ctx, x, y, length) {
+        ctx.fillStyle = '#808080';
+        for (let i = 0; i < length; i += 15) {
+            ctx.fillRect(x + 5, y + i, 10, 10);
+            ctx.fillRect(x, y + i + 5, 20, 5);
+        }
+    }
+
+    // ============================================
+    // TILE DRAWING
+    // ============================================
+    function drawTiles(ctx, level, cameraX) {
+        if (!sprites.loaded) {
+            // Fallback colored tiles
+            for (let y = 0; y < level.height; y++) {
+                for (let x = 0; x < level.width; x++) {
+                    const tile = level.map[y] ? level.map[y][x] : 0;
+                    if (tile > 0) {
+                        const screenX = x * TILE_SIZE - cameraX;
+                        if (screenX > -TILE_SIZE && screenX < GAME_WIDTH) {
+                            ctx.fillStyle = tile === 2 ? '#8B4513' : tile === 1 ? '#696969' : '#CD853F';
+                            ctx.fillRect(screenX, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                            ctx.strokeStyle = '#000';
+                            ctx.strokeRect(screenX, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        }
+                    }
+                }
+            }
+            return;
+        }
+
+        // Draw tiles from sprite sheet
+        for (let y = 0; y < level.height; y++) {
+            for (let x = 0; x < level.width; x++) {
+                const tile = level.map[y] ? level.map[y][x] : 0;
+                if (tile > 0) {
+                    const screenX = x * TILE_SIZE - cameraX;
+                    if (screenX > -TILE_SIZE && screenX < GAME_WIDTH) {
+                        let sx = 0, sy = 0;
+                        if (tile === 1) { sx = 384; sy = 0; } // Ceiling
+                        else if (tile === 2) { sx = 352; sy = 32; } // Ground
+                        else if (tile === 3) { sx = 320; sy = 0; } // Brick
+
+                        sprites.draw(ctx, sx, sy, 32, 32, screenX, y * TILE_SIZE, TILE_SIZE, TILE_SIZE, false);
+
+                        // Add detail to ground
+                        if (tile === 2 && y === level.height - 1) {
+                            ctx.fillStyle = '#8B4513';
+                            ctx.fillRect(screenX, y * TILE_SIZE + 28, TILE_SIZE, 4);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Draw goal flag
+        if (level.goal) {
+            const goalScreenX = level.goal.x - cameraX;
+            if (goalScreenX > -50 && goalScreenX < GAME_WIDTH + 50) {
+                // Flagpole
+                ctx.fillStyle = '#808080';
+                ctx.fillRect(goalScreenX, level.goal.y - 200, 8, 200);
+                // Flag
+                ctx.fillStyle = '#FF0000';
+                const wave = Math.sin(Date.now() * 0.005) * 5;
+                ctx.beginPath();
+                ctx.moveTo(goalScreenX + 8, level.goal.y - 200);
+                ctx.lineTo(goalScreenX + 60 + wave, level.goal.y - 170);
+                ctx.lineTo(goalScreenX + 8, level.goal.y - 140);
+                ctx.fill();
+                // Ball on top
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(goalScreenX + 4, level.goal.y - 200, 10, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+
+    // ============================================
+    // HUD DRAWING
+    // ============================================
+    function drawHUD(ctx) {
+        // Background bar
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(0, 0, GAME_WIDTH, 40);
+
+        // Score
+        ctx.fillStyle = COLORS.text;
+        ctx.font = 'bold 18px "Courier New"';
+        ctx.fillText(`SCORE: ${score.toString().padStart(6, '0')}`, 20, 28);
+
+        // Lives
+        ctx.fillText(`×${lives}`, 200, 28);
+        
+        // Draw life icon
+        if (sprites.loaded) {
+            sprites.draw(ctx, 0, 0, 32, 32, 175, 6, 24, 24, false);
+        } else {
+            ctx.fillStyle = '#FF0000';
+            ctx.beginPath();
+            ctx.arc(185, 20, 12, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Level
+        ctx.fillStyle = COLORS.text;
+        ctx.fillText(`LEVEL ${currentLevel}`, GAME_WIDTH / 2 - 40, 28);
+
+        // Powerup status
+        if (player.powerup === 'big') {
+            ctx.fillText('BIG', GAME_WIDTH - 100, 28);
+        } else if (player.powerup === 'fire') {
+            ctx.fillText('FIRE', GAME_WIDTH - 100, 28);
+            ctx.fillStyle = '#FF0000';
+            ctx.fillText('🔶', GAME_WIDTH - 60, 25);
+        }
+    }
+
+    // ============================================
+    // MENU SCREEN
+    // ============================================
+    function drawMenu(ctx) {
+        // Draw title image or fallback
+        if (titleImage.loaded) {
+            ctx.drawImage(titleImage.image, 0, 0, GAME_WIDTH, GAME_HEIGHT);
+        } else {
+            // Background
+            const gradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(1, '#228B22');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+            // Title
+            ctx.fillStyle = '#FF0000';
+            ctx.font = 'bold 64px "Courier New"';
+            ctx.textAlign = 'center';
+            ctx.fillText('MARIO BROS', GAME_WIDTH / 2, 120);
+            ctx.fillStyle = '#FFCC00';
+            ctx.fillText('MUSHROOM KINGDOM', GAME_WIDTH / 2, 200);
+
+            // Decorative Mario
+            if (sprites.loaded) {
+                sprites.draw(ctx, 0, 0, 32, 32, GAME_WIDTH / 2 - 48, 280, 96, 96, false);
+            }
+        }
+
+        // Instructions
+        ctx.fillStyle = COLORS.text;
+        ctx.font = '24px "Courier New"';
+        ctx.textAlign = 'center';
+        ctx.fillText('PRESS SPACE TO START', GAME_WIDTH / 2, 420);
+        
+        ctx.font = '16px "Courier New"';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('← → MOVE   SPACE JUMP   X SHOOT', GAME_WIDTH / 2, 470);
+
+        // Blinking effect
+        if (Math.floor(Date.now() / 500) % 2 === 0) {
+            ctx.fillStyle = COLORS.accent;
+            ctx.font = 'bold 28px "Courier New"';
+            ctx.fillText('▶ START ◀', GAME_WIDTH / 2, 480);
+        }
+    }
+
+    // ============================================
+    // GAME OVER SCREEN
+    // ============================================
+    function drawGameOver(ctx) {
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        ctx.fillStyle = '#FF0000';
+        ctx.font = 'bold 72px "Courier New"';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40);
+
+        ctx.fillStyle = COLORS.text;
+        ctx.font = '36px "Courier New"';
+        ctx.fillText(`FINAL SCORE: ${score}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 30);
+
+        ctx.font = '24px "Courier New"';
+        ctx.fillText('PRESS SPACE TO RESTART', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 100);
+    }
+
+    // ============================================
+    // WIN SCREEN
+    // ============================================
+    function drawWin(ctx) {
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 72px "Courier New"';
+        ctx.textAlign = 'center';
+        ctx.fillText('VICTORY!', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40);
+
+        ctx.fillStyle = COLORS.text;
+        ctx.font = '36px "Courier New"';
+        ctx.fillText(`FINAL SCORE: ${score}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 30);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '24px "Courier New"';
+        ctx.fillText('THE PRINCESS IS SAFE!', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 80);
+
+        ctx.fillText('PRESS SPACE TO PLAY AGAIN', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 130);
+    }
+
+    // ============================================
+    // INPUT HANDLING
+    // ============================================
+    const keys = {};
+
+    document.addEventListener('keydown', (e) => {
+        keys[e.code] = true;
+        
+        if (e.code === 'Space') {
+            e.preventDefault();
+            initAudio();
+            
+            if (gameState === 'menu') {
+                gameState = 'playing';
+                loadLevel(1);
+                score = 0;
+                lives = 3;
+            } else if (gameState === 'gameover' || gameState === 'win') {
+                gameState = 'menu';
+            }
+        }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        keys[e.code] = false;
+    });
+
+    muteBtn.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        muteBtn.textContent = soundEnabled ? '🔊 Sound' : '🔇 Muted';
+    });
+
+    // ============================================
+    // GAME UPDATE
+    // ============================================
+    function update(dt) {
+        if (gameState !== 'playing') return;
+
+        // Update player
+        player.update(dt, keys, currentLevelData);
+
+        // Update camera
+        const targetCameraX = player.x - GAME_WIDTH / 3;
+        cameraX += (targetCameraX - cameraX) * 0.1;
+        cameraX = Math.max(0, Math.min(cameraX, currentLevelData.width * TILE_SIZE - GAME_WIDTH));
+
+        // Update enemies
+        enemies.forEach(enemy => {
+            enemy.update(dt, currentLevelData);
+        });
+
+        // Update powerups
+        powerups.forEach(powerup => {
+            powerup.update(dt, currentLevelData);
+        });
+
+        // Update fireballs
+        fireballs = fireballs.filter(fb => {
+            fb.vy += 0.2;
+            fb.x += fb.vx;
+            fb.y += fb.vy;
+
+            // Check collision with tiles
+            const tileX = Math.floor(fb.x / TILE_SIZE);
+            const tileY = Math.floor(fb.y / TILE_SIZE);
+            if (currentLevelData.map[tileY] && currentLevelData.map[tileY][tileX] > 0) {
+                fb.bounce++;
+                fb.vy = -4;
+                fb.vx *= -1;
+                if (fb.bounce > 3) {
+                    createParticles(fb.x + 8, fb.y + 8, 5, '#FF6600');
+                    return false;
+                }
+            }
+
+            // Fall off screen
+            if (fb.y > GAME_HEIGHT + 50) return false;
+            if (fb.x < cameraX - 100 || fb.x > cameraX + GAME_WIDTH + 100) return false;
+
+            return true;
+        });
+
+        // Player-Enemy collisions
+        enemies.forEach(enemy => {
+            if (enemy.dead || enemy.state === 'flip') return;
+
+            // Stomp check (player falling on enemy)
+            if (player.vy > 0 && 
+                player.y + player.height > enemy.y &&
+                player.y + player.height < enemy.y + enemy.height &&
+                player.x + player.width > enemy.x + 5 &&
+                player.x < enemy.x + enemy.width - 5) {
+                enemy.stomp(player);
+            }
+            // Side collision
+            else if (checkCollision(player, enemy)) {
+                if (enemy.state === 'shell' && enemy.shellTimer <= 0) {
+                    // Kick shell
+                    enemy.vx = player.facing * 6;
+                    enemy.shellTimer = 300;
+                    playSound('kick');
+                    score += 100;
+                } else if (enemy.state === 'shell' && Math.abs(enemy.vx) > 0) {
+                    // Hit by moving shell
+                    player.hit();
+                } else {
+                    player.hit();
+                }
+            }
+        });
+
+        // Fireball-Enemy collisions
+        fireballs.forEach(fb => {
+            enemies.forEach(enemy => {
+                if (!enemy.dead && checkCollision(fb, enemy)) {
+                    enemy.hitByFireball(fb);
+                    fb.dead = true;
+                }
+            });
+        });
+
+        // Remove dead fireballs
+        fireballs = fireballs.filter(fb => !fb.dead);
+
+        // Player-Powerup collisions
+        powerups.forEach(powerup => {
+            if (!powerup.dead && powerup.active && checkCollision(player, powerup)) {
+                if (powerup.type === 'mushroom') {
+                    player.grow();
+                } else {
+                    player.getFire();
+                }
+                powerup.dead = true;
+                score += 1000;
+                createParticles(powerup.x + 14, powerup.y + 14, 20, COLORS.primary);
+            }
+        });
+
+        // Goal check
+        if (currentLevelData.goal && 
+            player.x > currentLevelData.goal.x - 30 && 
+            player.x < currentLevelData.goal.x + 30 &&
+            player.y > currentLevelData.goal.y - 220) {
+            player.reachedGoal = true;
+            playSound('win');
+            setTimeout(() => {
+                nextLevel();
+            }, 1500);
+        }
+
+        // Update particles
+        updateParticles();
+
+        // Screen shake decay
+        if (screenShake > 0) screenShake *= 0.9;
+    }
+
+    // ============================================
+    // GAME DRAW
+    // ============================================
+    function draw() {
+        // Clear canvas
+        ctx.fillStyle = COLORS.bg;
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        if (gameState === 'menu') {
+            drawMenu(ctx);
+            return;
+        }
+
+        // Apply screen shake
+        ctx.save();
+        if (screenShake > 0.5) {
+            ctx.translate(
+                (Math.random() - 0.5) * screenShake,
+                (Math.random() - 0.5) * screenShake
+            );
+        }
+
+        // Draw background with parallax
+        drawBackground(ctx, cameraX);
+
+        if (gameState === 'playing') {
+            // Draw tiles
+            drawTiles(ctx, currentLevelData, cameraX);
+
+            // Draw powerups
+            powerups.forEach(powerup => powerup.draw(ctx, cameraX));
+
+            // Draw enemies
+            enemies.forEach(enemy => enemy.draw(ctx, cameraX));
+
+            // Draw fireballs
+            fireballs.forEach(fb => {
+                if (!sprites.loaded) {
+                    ctx.fillStyle = '#FF6600';
+                    ctx.fillRect(fb.x - cameraX, fb.y, fb.width, fb.height);
+                } else {
+                    ctx.fillStyle = '#FF6600';
+                    ctx.beginPath();
+                    ctx.arc(fb.x - cameraX + 8, fb.y + 8, 8 + Math.sin(Date.now() * 0.02) * 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#FFFF00';
+                    ctx.beginPath();
+                    ctx.arc(fb.x - cameraX + 8, fb.y + 8, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            // Draw player
+            player.draw(ctx, cameraX);
+
+            // Draw particles
+            drawParticles(ctx, cameraX);
+
+            // Draw HUD
+            drawHUD(ctx);
+
+            // Goal reached message
+            if (player.reachedGoal) {
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(0, GAME_HEIGHT / 2 - 40, GAME_WIDTH, 80);
+                ctx.fillStyle = COLORS.text;
+                ctx.font = 'bold 36px "Courier New"';
+                ctx.textAlign = 'center';
+                ctx.fillText('LEVEL COMPLETE!', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 10);
+            }
+        }
+
+        ctx.restore();
+
+        if (gameState === 'gameover') {
+            drawGameOver(ctx);
+        } else if (gameState === 'win') {
+            drawWin(ctx);
+        }
+    }
+
+    // ============================================
+    // GAME LOOP
+    // ============================================
+    function gameLoop(timestamp) {
+        const dt = timestamp - lastTime;
+        lastTime = timestamp;
+
+        update(dt);
+        draw();
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    // ============================================
+    // CANVAS RESIZE
+    // ============================================
+    function resizeCanvas() {
+        const container = document.getElementById('gameContainer');
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        
+        const scale = Math.min(
+            containerWidth / GAME_WIDTH,
+            containerHeight / GAME_HEIGHT
+        );
+
+        canvas.width = GAME_WIDTH;
+        canvas.height = GAME_HEIGHT;
+        canvas.style.width = `${GAME_WIDTH * scale}px`;
+        canvas.style.height = `${GAME_HEIGHT * scale}px`;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // ============================================
+    // START GAME
+    // ============================================
+    requestAnimationFrame(gameLoop);
+
+    </script>
+</body>
+</html>

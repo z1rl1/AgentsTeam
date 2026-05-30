@@ -1,0 +1,33 @@
+{
+  "enabled": true,
+  "required": true,
+  "images": [
+    {
+      "type": "image",
+      "path": "assets/background.png",
+      "prompt": "wide gameplay background with depth, environment layers, cinematic composition, rich details, usable behind a canvas game. Game title: Neon Space Shooter. User request: Neon Space Shooter: космический шутер где корабль пилота летит внизу экрана, сверху летят враги разных типов (жук, каракатица, крейсер, босс), стрелять пробелом, собирать бонусы (щит, скорострел, бомба, жизнь), волны врагов с нарастающей сложностью, неоновый glow-эффекты стиль. Theme: neon-space. High quality game art, clear readable shapes, no UI text, no watermarks.",
+      "source": "minimax-base64"
+    },
+    {
+      "type": "image",
+      "path": "assets/sprites.png",
+      "prompt": "sprite sheet concept art containing the main playable character plus enemies/objects from the request, full body, readable silhouettes, multiple poses, game-ready. Game title: Neon Space Shooter. User request: Neon Space Shooter: космический шутер где корабль пилота летит внизу экрана, сверху летят враги разных типов (жук, каракатица, крейсер, босс), стрелять пробелом, собирать бонусы (щит, скорострел, бомба, жизнь), волны врагов с нарастающей сложностью, неоновый glow-эффекты стиль. Theme: neon-space. High quality game art, clear readable shapes, no UI text, no watermarks.",
+      "source": "minimax-base64"
+    },
+    {
+      "type": "image",
+      "path": "assets/title.png",
+      "prompt": "dramatic title/menu key art for the game, clean focal composition, no text, attractive first screen. Game title: Neon Space Shooter. User request: Neon Space Shooter: космический шутер где корабль пилота летит внизу экрана, сверху летят враги разных типов (жук, каракатица, крейсер, босс), стрелять пробелом, собирать бонусы (щит, скорострел, бомба, жизнь), волны врагов с нарастающей сложностью, неоновый glow-эффекты стиль. Theme: neon-space. High quality game art, clear readable shapes, no UI text, no watermarks.",
+      "source": "minimax-base64"
+    }
+  ],
+  "audio": [
+    {
+      "type": "music",
+      "path": "assets/theme.mp3",
+      "prompt": "Instrumental looping game soundtrack for Neon Space Shooter. Neon Space Shooter: космический шутер где корабль пилота летит внизу экрана, сверху летят враги разных типов (жук, каракатица, крейсер, босс), стрелять пробелом, собирать бонусы (щит, скорострел, бомба, жизнь), волны врагов с нарастающей сложностью, неоновый glow-эффекты стиль. Theme neon-space. Energetic, polished, suitable for browser arcade gameplay, no vocals.",
+      "source": "minimax-hex"
+    }
+  ],
+  "errors": []
+}

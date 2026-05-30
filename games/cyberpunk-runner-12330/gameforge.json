@@ -1,0 +1,37 @@
+{
+  "description": "Cyberpunk 2D платформер. Главный герой — хакер в неоновом костюме. Бежит по уровню вправо, прыгает пробелом, бьёт кулаком Z и стреляет хаком X. Враги 3 типов: охранник-робот (ходит патрулём), дрон (летает и стреляет), турель (стоит и стреляет). Фон: ночной город с неоновыми вывесками, параллакс 3 слоя. Платформы на разных высотах. При ударе по врагу — искры и отдача. Босс в конце уровня. HUD: жизни слева, энергия хака справа, счёт сверху по центру. Музыка с меню. Стиль: тёмный, неон, glow. Русский язык.",
+  "title": "Cyberpunk Runner",
+  "theme": "cyberpunk",
+  "user_id": "316330404",
+  "created_at": 1780092289,
+  "quality_threshold": 85,
+  "assets": {
+    "enabled": true,
+    "required": true,
+    "images": [
+      {
+        "type": "image",
+        "path": "assets/background.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/sprites.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/title.png",
+        "source": "minimax-base64"
+      }
+    ],
+    "audio": [
+      {
+        "type": "music",
+        "path": "assets/theme.mp3",
+        "source": "minimax-hex"
+      }
+    ],
+    "errors": []
+  }
+}

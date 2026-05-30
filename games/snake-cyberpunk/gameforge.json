@@ -1,0 +1,19 @@
+{
+  "mobile_optimized": true,
+  "mobile_optimized_at": "2026-05-29T19:51:52.890793Z",
+  "theme": "space",
+  "theme_changed_at": "2026-05-29T19:49:29.693192Z",
+  "difficulty": "hard",
+  "difficulty_changed_at": "2026-05-29T19:49:29.743150Z",
+  "qa_score": 74,
+  "fixed_at": "2026-05-29T20:20:26.614268Z",
+  "fix_kept": true,
+  "fix_history": [
+    {
+      "fixed_at": "2026-05-29T20:20:26.614268Z",
+      "score_before": 70,
+      "score_after": 74,
+      "kept": true
+    }
+  ]
+}

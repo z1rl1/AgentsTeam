@@ -1,17 +1,686 @@
 <!DOCTYPE html>
-<html lang="ru"><head><meta charset="UTF-8"><title>Киберпанк Змейка</title>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0a0014;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:'Courier New',monospace}h1{color:#ff00ff;font-size:2rem;margin-bottom:16px;text-shadow:0 0 20px #ff00ff}#score{color:#e0c0ff;font-size:1.2rem;margin-bottom:12px}canvas{border:2px solid #ff00ff;box-shadow:0 0 30px #ff00ff44}#msg{color:#ff00ff;font-size:1.1rem;margin-top:14px}</style>
-</head><body><h1>Киберпанк Змейка</h1><div id="score">Счёт: 0</div>
-<canvas id="c" width="400" height="400"></canvas>
-<div id="msg">Нажми Enter чтобы начать</div>
-<script>
-const C=document.getElementById('c'),ctx=C.getContext('2d');
-const SZ=20,COLS=20,ROWS=20,ACCENT='#ff00ff',BG2='#0d001a',FOOD='#00ffff';
-let snake,dir,next,food,score,loop,running=false;
-function init(){snake=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];dir={x:1,y:0};next={x:1,y:0};food=rnd();score=0;running=true;document.getElementById('score').textContent='Счёт: 0';document.getElementById('msg').textContent='';if(loop)clearInterval(loop);loop=setInterval(tick,120);}
-function rnd(){return{x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*ROWS)};}
-function tick(){dir=next;const h={x:snake[0].x+dir.x,y:snake[0].y+dir.y};if(h.x<0||h.x>=COLS||h.y<0||h.y>=ROWS||snake.some(s=>s.x===h.x&&s.y===h.y)){clearInterval(loop);running=false;document.getElementById('msg').textContent='Конец! Enter - заново';return;}snake.unshift(h);if(h.x===food.x&&h.y===food.y){score+=10;document.getElementById('score').textContent='Счёт: '+score;food=rnd();}else snake.pop();draw();}
-function draw(){ctx.fillStyle=BG2;ctx.fillRect(0,0,400,400);ctx.strokeStyle='#ffffff08';for(let i=0;i<=20;i++){ctx.beginPath();ctx.moveTo(i*SZ,0);ctx.lineTo(i*SZ,400);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*SZ);ctx.lineTo(400,i*SZ);ctx.stroke();}ctx.fillStyle=FOOD;ctx.shadowColor=FOOD;ctx.shadowBlur=15;ctx.fillRect(food.x*SZ+2,food.y*SZ+2,SZ-4,SZ-4);ctx.shadowBlur=0;snake.forEach((s,i)=>{ctx.fillStyle=i===0?ACCENT:'#666';ctx.shadowColor=ACCENT;ctx.shadowBlur=i===0?12:0;ctx.fillRect(s.x*SZ+1,s.y*SZ+1,SZ-2,SZ-2);});ctx.shadowBlur=0;}
-ctx.fillStyle=BG2;ctx.fillRect(0,0,400,400);ctx.fillStyle=ACCENT;ctx.font='bold 28px Courier New';ctx.textAlign='center';ctx.shadowColor=ACCENT;ctx.shadowBlur=20;ctx.fillText('Киберпанк Змейка',200,200);ctx.shadowBlur=0;
-document.addEventListener('keydown',e=>{if((e.code==='Enter'||e.code==='Space')&&!running){init();return;}if(!running)return;if(e.code==='ArrowUp'&&dir.y===0)next={x:0,y:-1};if(e.code==='ArrowDown'&&dir.y===0)next={x:0,y:1};if(e.code==='ArrowLeft'&&dir.x===0)next={x:-1,y:0};if(e.code==='ArrowRight'&&dir.x===0)next={x:1,y:0};});
-</script></body></html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Киберпанк Змейка</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta name="gameforge" content='{"title":"Cyberpunk Snake","description":"Neon cyberpunk snake game with power-ups and levels","tags":["snake","arcade","neon","cyberpunk"],"author":"GameForge","version":"1.0"}'>
+  <meta name="description" content="A neon cyberpunk snake game with power-ups, obstacles, levels and high score.">
+  <meta name="author" content="GameForge">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0a0014;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:'Courier New',monospace;overflow:hidden}
+    h1{color:#ff00ff;font-size:2rem;margin-bottom:16px;text-shadow:0 0 20px #ff00ff}
+    #score{color:#e0c0ff;font-size:1.2rem;margin-bottom:12px;text-align:center}
+    canvas{border:2px solid #ff00ff;box-shadow:0 0 30px #ff00ff44;display:block}
+    #msg{color:#ff00ff;font-size:1.1rem;margin-top:14px;text-align:center}
+    /* Prevent zoom on mobile */
+    *{touch-action:pan-x pan-y;}
+    canvas,#c{touch-action:none;}
+    body{overflow:hidden;}
+    .mo-btn{position:fixed;z-index:9999;background:rgba(255,255,255,0.18);border:2px solid rgba(255,255,255,0.45);border-radius:50%;color:#fff;font-size:22px;width:56px;height:56px;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;cursor:pointer;}
+    #mo-action{width:68px;height:68px;border-radius:12px;background:rgba(255,60,60,0.35);font-size:14px;}
+  </style>
+</head>
+<body>
+  <h1>Киберпанк Змейка</h1>
+  <div id="score">Счёт: 0</div>
+  <canvas id="c"></canvas>
+  <div id="msg">Нажми Enter чтобы начать</div>
+
+  <script>
+    // === Canvas setup ===
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const DPR = window.devicePixelRatio || 1;
+
+    let COLS = 40;
+    let ROWS = 40;
+    let cellSize = 20;
+
+    function resizeCanvas() {
+      const size = Math.min(window.innerWidth, window.innerHeight);
+      canvas.width = size;
+      canvas.height = size;
+      canvas.style.width = size + 'px';
+      canvas.style.height = size + 'px';
+      cellSize = size / COLS;
+    }
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      if (gameState === 'start' || gameState === 'gameover') draw();
+    });
+
+    resizeCanvas();
+
+    // === Game constants ===
+    const INITIAL_SPEED = 150;
+    const SPEED_INCREMENT = 10;
+    const MIN_SPEED = 50;
+    const SCORE_PER_LEVEL = 50;
+    const MAX_OBSTACLES_PER_LEVEL = 5;
+
+    // === Power-up types ===
+    const POWERUP_TYPES = [
+      { type: 'speed',   color: '#ffff00', label: 'SPEED',  duration: 5000 },
+      { type: 'slow',    color: '#00ffff', label: 'SLOW',   duration: 5000 },
+      { type: 'ghost',  color: '#ff00ff', label: 'GHOST',  duration: 5000 },
+      { type: 'score2x', color: '#00ff00', label: '2X',     duration: 5000 }
+    ];
+
+    // === Game state ===
+    let snake, dir, nextDir, food, powerUps, obstacles, particles;
+    let score, highScore, level, lives, speed, accumulator, lastTime;
+    let gameState = 'start'; // 'start', 'playing', 'gameover'
+    let activePowerUps = {};
+
+    // === Audio ===
+    function playSound(type) {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        switch (type) {
+          case 'eat':
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.1);
+            break;
+          case 'powerup':
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.2);
+            break;
+          case 'die':
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.5);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.5);
+            break;
+          case 'levelup':
+            osc.frequency.setValueAtTime(523, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(784, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.3);
+            break;
+        }
+      } catch (e) {
+        // Audio not supported
+      }
+    }
+
+    // === Particle system ===
+    function createParticles(x, y, color, count) {
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const spd = 0.5 + Math.random() * 2;
+        particles.push({
+          x: x * cellSize + cellSize / 2,
+          y: y * cellSize + cellSize / 2,
+          vx: Math.cos(angle) * spd,
+          vy: Math.sin(angle) * spd,
+          life: 1,
+          decay: 0.02 + Math.random() * 0.03,
+          color: color,
+          size: 2 + Math.random() * 4
+        });
+      }
+    }
+
+    function updateParticles(dt) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx * (dt / 16);
+        p.y += p.vy * (dt / 16);
+        p.life -= p.decay;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+    }
+
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    // === Background starfield (static) ===
+    const stars = [];
+    function initStars() {
+      for (let i = 0; i < 100; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 1.5,
+          alpha: Math.random() * 0.5 + 0.2
+        });
+      }
+    }
+    initStars();
+
+    function drawStars() {
+      stars.forEach(s => {
+        ctx.globalAlpha = s.alpha;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    // === Game initialization ===
+    function initGame() {
+      snake = [
+        { x: 20, y: 20 },
+        { x: 19, y: 20 },
+        { x: 18, y: 20 }
+      ];
+      dir = { x: 1, y: 0 };
+      nextDir = { x: 1, y: 0 };
+      score = 0;
+      level = 1;
+      lives = 3;
+      speed = INITIAL_SPEED;
+      obstacles = [];
+      powerUps = [];
+      particles = [];
+      activePowerUps = {};
+      highScore = parseInt(localStorage.getItem('cyberSnakeHighScore') || '0');
+      spawnFood();
+      accumulator = 0;
+      lastTime = performance.now();
+      gameState = 'playing';
+      document.getElementById('msg').textContent = '';
+      requestAnimationFrame(gameLoop);
+    }
+
+    // === Spawn functions ===
+    function isOccupied(pos) {
+      if (snake.some(s => s.x === pos.x && s.y === pos.y)) return true;
+      if (obstacles.some(o => o.x === pos.x && o.y === pos.y)) return true;
+      if (powerUps.some(p => p.x === pos.x && p.y === pos.y)) return true;
+      return false;
+    }
+
+    function spawnFood() {
+      let pos;
+      do {
+        pos = {
+          x: Math.floor(Math.random() * COLS),
+          y: Math.floor(Math.random() * ROWS)
+        };
+      } while (isOccupied(pos));
+      food = pos;
+    }
+
+    function spawnPowerUp() {
+      if (powerUps.length >= 1) return;
+      const typeInfo = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+      let pos;
+      do {
+        pos = {
+          x: Math.floor(Math.random() * COLS),
+          y: Math.floor(Math.random() * ROWS)
+        };
+      } while (isOccupied(pos));
+      powerUps.push({
+        x: pos.x,
+        y: pos.y,
+        type: typeInfo.type,
+        color: typeInfo.color,
+        label: typeInfo.label,
+        duration: typeInfo.duration,
+        timer: 0
+      });
+    }
+
+    function spawnObstacle() {
+      const maxObs = Math.min(level * 2, MAX_OBSTACLES_PER_LEVEL);
+      if (obstacles.length >= maxObs) return;
+      let pos;
+      do {
+        pos = {
+          x: Math.floor(Math.random() * COLS),
+          y: Math.floor(Math.random() * ROWS)
+        };
+      } while (isOccupied(pos) ||
+        (Math.abs(pos.x - snake[0].x) < 5 && Math.abs(pos.y - snake[0].y) < 5));
+      obstacles.push(pos);
+    }
+
+    // === Tick (game logic) ===
+    function tick() {
+      dir = nextDir;
+      const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+      // Wall collision
+      if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) {
+        handleDeath();
+        return;
+      }
+
+      // Self collision (if not ghost)
+      if (!activePowerUps.ghost) {
+        if (snake.some(s => s.x === head.x && s.y === head.y)) {
+          handleDeath();
+          return;
+        }
+      }
+
+      // Obstacle collision
+      if (obstacles.some(o => o.x === head.x && o.y === head.y)) {
+        handleDeath();
+        return;
+      }
+
+      snake.unshift(head);
+
+      // Food collision
+      if (head.x === food.x && head.y === food.y) {
+        const multiplier = activePowerUps.score2x ? 2 : 1;
+        score += 10 * multiplier;
+        createParticles(food.x, food.y, '#00ffff', 12);
+        playSound('eat');
+        updateScoreUI();
+        spawnFood();
+        // Chance to spawn power-up
+        if (Math.random() < 0.2) spawnPowerUp();
+
+        // Level up check
+        if (score >= level * SCORE_PER_LEVEL) {
+          levelUp();
+        }
+      } else {
+        snake.pop();
+      }
+
+      // Power-up collision
+      for (let i = powerUps.length - 1; i >= 0; i--) {
+        const pu = powerUps[i];
+        if (head.x === pu.x && head.y === pu.y) {
+          activePowerUps[pu.type] = true;
+          activePowerUps[pu.type + '_timer'] = pu.duration;
+          createParticles(pu.x, pu.y, pu.color, 20);
+          playSound('powerup');
+          powerUps.splice(i, 1);
+        }
+      }
+
+      // Update power-up timers (approx)
+      for (const key in activePowerUps) {
+        if (key.endsWith('_timer')) {
+          activePowerUps[key] -= speed;
+          if (activePowerUps[key] <= 0) {
+            const type = key.replace('_timer', '');
+            activePowerUps[type] = false;
+            delete activePowerUps[key];
+          }
+        }
+      }
+
+      // Random obstacle spawn after level 2
+      if (level > 2 && Math.random() < 0.03) spawnObstacle();
+    }
+
+    function levelUp() {
+      level++;
+      speed = Math.max(MIN_SPEED, speed - SPEED_INCREMENT);
+      playSound('levelup');
+      spawnObstacle();
+      // Flash effect
+      createParticles(snake[0].x, snake[0].y, '#ff00ff', 30);
+    }
+
+    function handleDeath() {
+      lives--;
+      playSound('die');
+      if (lives <= 0) {
+        gameState = 'gameover';
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem('cyberSnakeHighScore', highScore);
+        }
+      } else {
+        // Reset snake position
+        snake = [
+          { x: 20, y: 20 },
+          { x: 19, y: 20 },
+          { x: 18, y: 20 }
+        ];
+        dir = { x: 1, y: 0 };
+        nextDir = { x: 1, y: 0 };
+        // Reduce obstacles
+        obstacles = obstacles.slice(0, Math.floor(obstacles.length / 2));
+        // Remove active power-ups
+        activePowerUps = {};
+        // Reset speed for new life
+        speed = INITIAL_SPEED - (level - 1) * SPEED_INCREMENT;
+        if (speed < MIN_SPEED) speed = MIN_SPEED;
+      }
+    }
+
+    function updateScoreUI() {
+      const el = document.getElementById('score');
+      el.textContent = 'Счёт: ' + score + ' | Уровень: ' + level + ' | Жизни: ' + lives;
+    }
+
+    // === Main game loop ===
+    function gameLoop(timestamp) {
+      if (gameState !== 'playing') {
+        draw();
+        requestAnimationFrame(gameLoop);
+        return;
+      }
+
+      const dt = timestamp - lastTime;
+      lastTime = timestamp;
+      accumulator += dt;
+
+      // Fixed timestep update
+      while (accumulator >= speed) {
+        tick();
+        accumulator -= speed;
+        if (gameState === 'gameover') break;
+      }
+
+      updateParticles(dt);
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // === Drawing ===
+    function draw() {
+      // Background gradient
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, '#0a0014');
+      gradient.addColorStop(0.5, '#1a002a');
+      gradient.addColorStop(1, '#0a0014');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw static stars
+      drawStars();
+
+      // Draw grid lines
+      ctx.strokeStyle = 'rgba(255, 0, 255, 0.06)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= COLS; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * cellSize, 0);
+        ctx.lineTo(i * cellSize, canvas.height);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i * cellSize);
+        ctx.lineTo(canvas.width, i * cellSize);
+        ctx.stroke();
+      }
+
+      // Draw obstacles (triangles)
+      obstacles.forEach(o => {
+        ctx.fillStyle = '#ff3366';
+        ctx.shadowColor = '#ff3366';
+        ctx.shadowBlur = 10;
+        const cx = o.x * cellSize + cellSize / 2;
+        const cy = o.y * cellSize + cellSize / 2;
+        const r = cellSize / 2 - 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - r);
+        ctx.lineTo(cx + r * Math.cos(Math.PI / 6), cy + r * Math.sin(Math.PI / 6));
+        ctx.lineTo(cx - r * Math.cos(Math.PI / 6), cy + r * Math.sin(Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+
+      // Draw food (circle)
+      ctx.fillStyle = '#00ffff';
+      ctx.shadowColor = '#00ffff';
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(
+        food.x * cellSize + cellSize / 2,
+        food.y * cellSize + cellSize / 2,
+        cellSize / 2 - 2,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Draw power-ups (star shape)
+      powerUps.forEach(pu => {
+        ctx.fillStyle = pu.color;
+        ctx.shadowColor = pu.color;
+        ctx.shadowBlur = 12;
+        const cx = pu.x * cellSize + cellSize / 2;
+        const cy = pu.y * cellSize + cellSize / 2;
+        const outerR = cellSize / 2 - 2;
+        const innerR = outerR * 0.4;
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const outerAngle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+          const innerAngle = outerAngle + Math.PI / 5;
+          const ox = cx + Math.cos(outerAngle) * outerR;
+          const oy = cy + Math.sin(outerAngle) * outerR;
+          const ix = cx + Math.cos(innerAngle) * innerR;
+          const iy = cy + Math.sin(innerAngle) * innerR;
+          if (i === 0) ctx.moveTo(ox, oy);
+          else ctx.lineTo(ox, oy);
+          ctx.lineTo(ix, iy);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Label
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '10px Courier New';
+        ctx.textAlign = 'center';
+        ctx.fillText(pu.label, cx, cy + 4);
+      });
+
+      // Draw particles
+      drawParticles();
+
+      // Draw snake
+      snake.forEach((seg, i) => {
+        const isHead = i === 0;
+        const segX = seg.x * cellSize;
+        const segY = seg.y * cellSize;
+        if (isHead) {
+          // Head: rounded rectangle with glow
+          ctx.fillStyle = '#ff00ff';
+          ctx.shadowColor = '#ff00ff';
+          ctx.shadowBlur = 15;
+          ctx.beginPath();
+          ctx.roundRect(segX + 1, segY + 1, cellSize - 2, cellSize - 2, cellSize / 4);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          // Eyes
+          ctx.fillStyle = '#ffffff';
+          const eyeSize = cellSize / 8;
+          let eyeOffsetX = cellSize / 2;
+          let eyeOffsetY = cellSize / 2;
+          if (dir.x === 1) eyeOffsetX = cellSize * 0.7;
+          else if (dir.x === -1) eyeOffsetX = cellSize * 0.3;
+          else eyeOffsetX = cellSize / 2;
+          if (dir.y === 1) eyeOffsetY = cellSize * 0.7;
+          else if (dir.y === -1) eyeOffsetY = cellSize * 0.3;
+          ctx.beginPath();
+          ctx.arc(segX + eyeOffsetX - eyeSize, segY + eyeOffsetY - eyeSize, eyeSize, 0, Math.PI * 2);
+          ctx.arc(segX + eyeOffsetX + eyeSize, segY + eyeOffsetY - eyeSize, eyeSize, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Body: circles with gradient and transparency
+          const alpha = 1 - (i / snake.length) * 0.7;
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = i % 2 === 0 ? '#cc00cc' : '#990099';
+          ctx.shadowColor = '#ff00ff';
+          ctx.shadowBlur = 5;
+          ctx.beginPath();
+          ctx.arc(segX + cellSize / 2, segY + cellSize / 2, cellSize / 2 - 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.shadowBlur = 0;
+        }
+      });
+
+      // UI overlay (canvas)
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '14px Courier New';
+      ctx.textAlign = 'left';
+      ctx.fillText('Счёт: ' + score, 10, 20);
+      ctx.fillText('Уровень: ' + level, 10, 40);
+      ctx.fillText('Жизни: ' + lives, 10, 60);
+      ctx.fillText('Рекорд: ' + highScore, 10, 80);
+
+      // Active power-ups indicators
+      let puY = 100;
+      for (const key in activePowerUps) {
+        if (!key.endsWith('_timer')) {
+          ctx.fillStyle = activePowerUps[key] ? '#ffff00' : '#888888';
+          ctx.fillText(key.toUpperCase() + ' ACTIVE', 10, puY);
+          puY += 20;
+        }
+      }
+
+      // Start screen
+      if (gameState === 'start') {
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ff00ff';
+        ctx.shadowColor = '#ff00ff';
+        ctx.shadowBlur = 20;
+        ctx.font = 'bold 32px Courier New';
+        ctx.textAlign = 'center';
+        ctx.fillText('КИБЕРпанк ЗМЕЙКА', canvas.width / 2, canvas.height / 2 - 70);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px Courier New';
+        ctx.fillText('Управление: Стрелки / WASD', canvas.width / 2, canvas.height / 2 - 20);
+        ctx.fillText('Нажмите ENTER или SPACE', canvas.width / 2, canvas.height / 2 + 20);
+        ctx.fillText('для старта', canvas.width / 2, canvas.height / 2 + 45);
+      }
+
+      // Game over screen
+      if (gameState === 'gameover') {
+        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ff3366';
+        ctx.shadowColor = '#ff3366';
+        ctx.shadowBlur = 20;
+        ctx.font = 'bold 36px Courier New';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 50);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '20px Courier New';
+        ctx.fillText('Счёт: ' + score, canvas.width / 2, canvas.height / 2);
+        ctx.fillText('Рекорд: ' + highScore, canvas.width / 2, canvas.height / 2 + 30);
+        ctx.fillStyle = '#aaaaaa';
+        ctx.font = '16px Courier New';
+        ctx.fillText('ENTER - заново', canvas.width / 2, canvas.height / 2 + 70);
+      }
+    }
+
+    // === Input handling ===
+    document.addEventListener('keydown', e => {
+      if ((e.code === 'Enter' || e.code === 'Space') && (gameState === 'start' || gameState === 'gameover')) {
+        initGame();
+        return;
+      }
+      if (gameState !== 'playing') return;
+      switch (e.code) {
+        case 'ArrowUp':
+        case 'KeyW':
+          if (dir.y === 0) nextDir = { x: 0, y: -1 };
+          break;
+        case 'ArrowDown':
+        case 'KeyS':
+          if (dir.y === 0) nextDir = { x: 0, y: 1 };
+          break;
+        case 'ArrowLeft':
+        case 'KeyA':
+          if (dir.x === 0) nextDir = { x: -1, y: 0 };
+          break;
+        case 'ArrowRight':
+        case 'KeyD':
+          if (dir.x === 0) nextDir = { x: 1, y: 0 };
+          break;
+      }
+    });
+
+    // === Mobile controls (mobile-optimizer) ===
+    (function () {
+      var keys = {
+        left:  {key: 'ArrowLeft',  code: 'ArrowLeft',  keyCode: 37},
+        right: {key: 'ArrowRight', code: 'ArrowRight', keyCode: 39},
+        up:    {key: 'ArrowUp',    code: 'ArrowUp',    keyCode: 38},
+        down:  {key: 'ArrowDown',  code: 'ArrowDown',  keyCode: 40},
+        action:{key: ' ',          code: 'Space',      keyCode: 32}
+      };
+
+      function fire(type, info) {
+        document.dispatchEvent(new KeyboardEvent(type, {
+          key: info.key,
+          code: info.code,
+          keyCode: info.keyCode,
+          which: info.keyCode,
+          bubbles: true,
+          cancelable: true
+        }));
+      }
+
+      function btn(label, dir, style) {
+        var el = document.createElement('button');
+        el.className = 'mo-btn';
+        el.textContent = label;
+        el.style.cssText = style;
+        el.addEventListener('touchstart', function (e) { e.preventDefault(); fire('keydown', keys[dir]); }, { passive: false });
+        el.addEventListener('touchend',   function (e) { e.preventDefault(); fire('keyup', keys[dir]); }, { passive: false });
+        el.addEventListener('mousedown',  function () { fire('keydown', keys[dir]); });
+        el.addEventListener('mouseup',    function () { fire('keyup', keys[dir]); });
+        return el;
+      }
+
+      function inject() {
+        document.body.appendChild(btn('←', 'left',  'bottom:90px;left:16px'));
+        document.body.appendChild(btn('→', 'right', 'bottom:90px;left:128px'));
+        document.body.appendChild(btn('↑', 'up',    'bottom:150px;left:72px'));
+        document.body.appendChild(btn('↓', 'down',  'bottom:30px;left:72px'));
+        document.body.appendChild(btn('ACTION', 'action', 'bottom:80px;right:20px;width:68px;height:68px;border-radius:12px;background:rgba(255,60,60,0.35);font-size:14px;'));
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', inject);
+      } else {
+        inject();
+      }
+    })();
+
+    // Initial draw for start screen
+    draw();
+  </script>
+</body>
+</html>

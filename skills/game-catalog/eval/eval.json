@@ -21,10 +21,10 @@
       "description": "Has surge link"
     },
     {
-      "id": "has_emoji",
+      "id": "has_status",
       "type": "contains",
-      "pattern": "OK|ready|готова",
-      "description": "Has status"
+      "pattern": "Total:",
+      "description": "Has total count"
     }
   ]
 }

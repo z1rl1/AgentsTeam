@@ -1,0 +1,33 @@
+{
+  "enabled": true,
+  "required": true,
+  "images": [
+    {
+      "type": "image",
+      "path": "assets/background.png",
+      "prompt": "wide gameplay background with depth, environment layers, cinematic composition, rich details, usable behind a canvas game. Game title: Cyberpunk Runner v2. User request: Cyberpunk 2D платформер. Главный герой — хакер в неоновом костюме. Бежит по уровню вправо, прыгает пробелом, бьёт кулаком Z и стреляет хаком X. Враги 3 типов: охранник-робот (ходит патрулём), дрон (летает и стреляет), турель (стоит и стреляет). Фон: ночной город с неоновыми вывесками, параллакс 3 слоя. Платформы на разных высотах. При ударе по врагу — искры и отдача. Босс в конце уровня. HUD: жизни слева, энергия хака справа, счёт сверху по центру. Музыка с меню. Стиль: тёмный, неон, glow. Русский язык.. Theme: cyberpunk. High quality game art, clear readable shapes, no UI text, no watermarks.",
+      "source": "minimax-base64"
+    },
+    {
+      "type": "image",
+      "path": "assets/sprites.png",
+      "prompt": "sprite sheet concept art containing the main playable character plus enemies/objects from the request, full body, readable silhouettes, multiple poses, game-ready. Game title: Cyberpunk Runner v2. User request: Cyberpunk 2D платформер. Главный герой — хакер в неоновом костюме. Бежит по уровню вправо, прыгает пробелом, бьёт кулаком Z и стреляет хаком X. Враги 3 типов: охранник-робот (ходит патрулём), дрон (летает и стреляет), турель (стоит и стреляет). Фон: ночной город с неоновыми вывесками, параллакс 3 слоя. Платформы на разных высотах. При ударе по врагу — искры и отдача. Босс в конце уровня. HUD: жизни слева, энергия хака справа, счёт сверху по центру. Музыка с меню. Стиль: тёмный, неон, glow. Русский язык.. Theme: cyberpunk. High quality game art, clear readable shapes, no UI text, no watermarks.",
+      "source": "minimax-base64"
+    },
+    {
+      "type": "image",
+      "path": "assets/title.png",
+      "prompt": "dramatic title/menu key art for the game, clean focal composition, no text, attractive first screen. Game title: Cyberpunk Runner v2. User request: Cyberpunk 2D платформер. Главный герой — хакер в неоновом костюме. Бежит по уровню вправо, прыгает пробелом, бьёт кулаком Z и стреляет хаком X. Враги 3 типов: охранник-робот (ходит патрулём), дрон (летает и стреляет), турель (стоит и стреляет). Фон: ночной город с неоновыми вывесками, параллакс 3 слоя. Платформы на разных высотах. При ударе по врагу — искры и отдача. Босс в конце уровня. HUD: жизни слева, энергия хака справа, счёт сверху по центру. Музыка с меню. Стиль: тёмный, неон, glow. Русский язык.. Theme: cyberpunk. High quality game art, clear readable shapes, no UI text, no watermarks.",
+      "source": "minimax-base64"
+    }
+  ],
+  "audio": [
+    {
+      "type": "music",
+      "path": "assets/theme.mp3",
+      "prompt": "Instrumental looping game soundtrack for Cyberpunk Runner v2. Cyberpunk 2D платформер. Главный герой — хакер в неоновом костюме. Бежит по уровню вправо, прыгает пробелом, бьёт кулаком Z и стреляет хаком X. Враги 3 типов: охранник-робот (ходит патрулём), дрон (летает и стреляет), турель (стоит и стреляет). Фон: ночной город с неоновыми вывесками, параллакс 3 слоя. Платформы на разных высотах. При ударе по врагу — искры и отдача. Босс в конце уровня. HUD: жизни слева, энергия хака справа, счёт сверху по центру. Музыка с меню. Стиль: тёмный, неон, glow. Русский язык.. Theme cyberpunk. Energetic, polished, suitable for browser arcade gameplay, no vocals.",
+      "source": "minimax-hex"
+    }
+  ],
+  "errors": []
+}

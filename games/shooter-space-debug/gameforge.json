@@ -1,0 +1,43 @@
+{
+  "description": "еоновый космический шутер Звёздный рубеж",
+  "title": "Звёздный Рубеж",
+  "theme": "space",
+  "user_id": "316330404",
+  "created_at": 1780103595,
+  "quality_threshold": 85,
+  "assets": {
+    "enabled": true,
+    "required": true,
+    "images": [
+      {
+        "type": "image",
+        "path": "assets/background.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/title.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/player-idle.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/enemy.png",
+        "source": "minimax-base64"
+      }
+    ],
+    "audio": [
+      {
+        "type": "music",
+        "path": "assets/theme.mp3",
+        "source": "minimax-hex"
+      }
+    ],
+    "errors": []
+  },
+  "qa_score": 0
+}

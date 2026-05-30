@@ -1,0 +1,13 @@
+{
+  "qa_score": 74,
+  "fixed_at": "2026-05-29T20:06:37.829698Z",
+  "fix_kept": false,
+  "fix_history": [
+    {
+      "fixed_at": "2026-05-29T20:06:37.829698Z",
+      "score_before": 74,
+      "score_after": 74,
+      "kept": false
+    }
+  ]
+}

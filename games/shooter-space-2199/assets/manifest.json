@@ -1,0 +1,10 @@
+{
+  "enabled": false,
+  "required": true,
+  "images": [],
+  "audio": [],
+  "errors": [
+    "player-shoot.png: MiniMax API error 2056: usage limit exceeded, daily usage limit reached for Token Plan Plus (50/50 used), resets at 2026-05-31T00:00:00Z"
+  ],
+  "quota_exhausted": true
+}

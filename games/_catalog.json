@@ -1,0 +1,131 @@
+{
+  "games": [
+    {
+      "slug": "snake-zombie-0001",
+      "title": "Змейка: Зомби",
+      "type": "snake",
+      "theme": "zombie",
+      "score": 75.0,
+      "url": "https://snake-zombie-0001.surge.sh",
+      "created": "2026-05-22T19:56:12.522406",
+      "tags": [
+        "snake",
+        "zombie",
+        "snake"
+      ]
+    },
+    {
+      "slug": "platformer-retro-7293",
+      "title": "Street Fighter — 90-е",
+      "type": "platformer",
+      "theme": "retro",
+      "score": 75.0,
+      "url": "https://platformer-retro-7293.surge.sh",
+      "created": "2026-05-22T20:13:12.431543",
+      "tags": [
+        "platformer",
+        "retro",
+        "platformer"
+      ]
+    },
+    {
+      "slug": "crash-cars-4428",
+      "title": "Crash Cars",
+      "type": "physics",
+      "theme": "crash",
+      "score": 80.0,
+      "url": "https://crash-cars-4428.surge.sh",
+      "created": "2026-05-22T22:12:28.044065",
+      "tags": [
+        "physics",
+        "crash",
+        "crash"
+      ]
+    },
+    {
+      "slug": "subway-surge-5671",
+      "title": "Subway Surge",
+      "type": "runner",
+      "theme": "subway",
+      "score": 80.0,
+      "url": "https://subway-surge-5671.surge.sh",
+      "created": "2026-05-22T22:14:55.359477",
+      "tags": [
+        "runner",
+        "subway",
+        "subway"
+      ]
+    },
+    {
+      "slug": "tank-battle-0225",
+      "title": "Танчики: Поле боя",
+      "type": "tank-battle",
+      "theme": "retro",
+      "score": 100.0,
+      "url": "https://tank-battle-0225.surge.sh",
+      "created": "2026-05-22T22:51:24.360688",
+      "tags": [
+        "tank-battle",
+        "retro",
+        "tank"
+      ]
+    },
+    {
+      "slug": "neon-backstreets-0723",
+      "title": "Neon Backstreets",
+      "type": "beat-em-up",
+      "theme": "neon",
+      "score": 100.0,
+      "url": "https://neon-backstreets-0723.surge.sh",
+      "created": "2026-05-23T11:11:45.905648",
+      "tags": [
+        "beat-em-up",
+        "neon",
+        "neon"
+      ]
+    },
+    {
+      "slug": "sky-raiders-0834",
+      "title": "Sky Raiders: Машины в Небе",
+      "type": "physics-launcher",
+      "theme": "neon",
+      "score": 100.0,
+      "url": "https://sky-raiders-0834.surge.sh",
+      "created": "2026-05-23T12:18:57.618767",
+      "tags": [
+        "physics-launcher",
+        "neon",
+        "sky"
+      ]
+    },
+    {
+      "slug": "mario-mushroom-1247",
+      "title": "Mario Bros: Mushroom Kingdom",
+      "type": "platformer",
+      "theme": "retro",
+      "score": 96.0,
+      "url": "https://mario-mushroom-1247.surge.sh",
+      "created": "2026-05-23T13:25:30.479524",
+      "tags": [
+        "platformer",
+        "retro",
+        "mario"
+      ]
+    },
+    {
+      "slug": "meteor-courier-3847",
+      "title": "Meteor Courier",
+      "type": "runner",
+      "theme": "cyberpunk",
+      "score": 100.0,
+      "url": "https://meteor-courier-3847.surge.sh",
+      "created": "2026-05-23T13:49:52.167347",
+      "tags": [
+        "runner",
+        "cyberpunk",
+        "meteor"
+      ]
+    }
+  ],
+  "version": "1.0"
+}

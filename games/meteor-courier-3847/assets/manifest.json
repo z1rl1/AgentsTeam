@@ -1,0 +1,28 @@
+{
+  "enabled": true,
+  "required": true,
+  "images": [
+    {
+      "type": "image",
+      "path": "assets/background.png",
+      "prompt": "wide gameplay background with depth, environment layers, cinematic composition, rich details, usable behind a canvas game. Game title: Meteor Courier. User request: Meteor Courier - cinematic 2D arcade runner. Player rides antigravity bike through futuristic city during meteor shower, delivers capsules between rooftops, dodges meteors, flies over gaps, shoots drones, upgrades bike. CRITICAL VISUAL RULES: 1) MUST draw ALL game objects using ctx.drawImage from assets/sprites.png - courier on bike, drones, meteors, capsules, powerups, explosions. NOT fillRect/arc. 2) Background from assets/background.png using drawCover helper. 3) UI panels with readable system fonts, proper hierarchy, contrast. NO stretched images. NO ugly pixel text on top of images. NO debug green. Style: deep blue/purple city, warm orange meteors, cyan/magenta accents. Multi-layer parallax: distant skyscrapers, mid rooftops, foreground antennas/signs/smoke. Assets: background.png (futuristic city with depth), sprites.png (courier on bike, drones, meteors, capsules, powerups, explosions), title.png (title/menu art), theme.mp3 (synthwave/electronic music). Gameplay: player moves left-to-right, camera follows. Deliver 5 capsules to landing pads before city destruction. 3 difficulty phases. Controls: W/S height, A/D brake/accelerate, Space boost, E shield, M music, Enter start. HUD: health, energy, delivered 0/5, speed, combo. 5 minute gameplay minimum with progression. Smooth camera, parallax, spark particles, fire trails, explosions, screen shake on impact, hit flash on damage. WebAudio sounds: boost, damage, delivery, shield, explosion, victory.. Theme: cyberpunk. High quality game art, clear readable shapes, no UI text, no watermarks.",
+      "source": "minimax-base64"
+    },
+    {
+      "type": "image",
+      "path": "assets/sprites.png",
+      "prompt": "sprite sheet concept art containing the main playable character plus enemies/objects from the request, full body, readable silhouettes, multiple poses, game-ready. Game title: Meteor Courier. User request: Meteor Courier - cinematic 2D arcade runner. Player rides antigravity bike through futuristic city during meteor shower, delivers capsules between rooftops, dodges meteors, flies over gaps, shoots drones, upgrades bike. CRITICAL VISUAL RULES: 1) MUST draw ALL game objects using ctx.drawImage from assets/sprites.png - courier on bike, drones, meteors, capsules, powerups, explosions. NOT fillRect/arc. 2) Background from assets/background.png using drawCover helper. 3) UI panels with readable system fonts, proper hierarchy, contrast. NO stretched images. NO ugly pixel text on top of images. NO debug green. Style: deep blue/purple city, warm orange meteors, cyan/magenta accents. Multi-layer parallax: distant skyscrapers, mid rooftops, foreground antennas/signs/smoke. Assets: background.png (futuristic city with depth), sprites.png (courier on bike, drones, meteors, capsules, powerups, explosions), title.png (title/menu art), theme.mp3 (synthwave/electronic music). Gameplay: player moves left-to-right, camera follows. Deliver 5 capsules to landing pads before city destruction. 3 difficulty phases. Controls: W/S height, A/D brake/accelerate, Space boost, E shield, M music, Enter start. HUD: health, energy, delivered 0/5, speed, combo. 5 minute gameplay minimum with progression. Smooth camera, parallax, spark particles, fire trails, explosions, screen shake on impact, hit flash on damage. WebAudio sounds: boost, damage, delivery, shield, explosion, victory.. Theme: cyberpunk. High quality game art, clear readable shapes, no UI text, no watermarks.",
+      "source": "minimax-base64"
+    },
+    {
+      "type": "image",
+      "path": "assets/title.png",
+      "prompt": "dramatic title/menu key art for the game, clean focal composition, no text, attractive first screen. Game title: Meteor Courier. User request: Meteor Courier - cinematic 2D arcade runner. Player rides antigravity bike through futuristic city during meteor shower, delivers capsules between rooftops, dodges meteors, flies over gaps, shoots drones, upgrades bike. CRITICAL VISUAL RULES: 1) MUST draw ALL game objects using ctx.drawImage from assets/sprites.png - courier on bike, drones, meteors, capsules, powerups, explosions. NOT fillRect/arc. 2) Background from assets/background.png using drawCover helper. 3) UI panels with readable system fonts, proper hierarchy, contrast. NO stretched images. NO ugly pixel text on top of images. NO debug green. Style: deep blue/purple city, warm orange meteors, cyan/magenta accents. Multi-layer parallax: distant skyscrapers, mid rooftops, foreground antennas/signs/smoke. Assets: background.png (futuristic city with depth), sprites.png (courier on bike, drones, meteors, capsules, powerups, explosions), title.png (title/menu art), theme.mp3 (synthwave/electronic music). Gameplay: player moves left-to-right, camera follows. Deliver 5 capsules to landing pads before city destruction. 3 difficulty phases. Controls: W/S height, A/D brake/accelerate, Space boost, E shield, M music, Enter start. HUD: health, energy, delivered 0/5, speed, combo. 5 minute gameplay minimum with progression. Smooth camera, parallax, spark particles, fire trails, explosions, screen shake on impact, hit flash on damage. WebAudio sounds: boost, damage, delivery, shield, explosion, victory.. Theme: cyberpunk. High quality game art, clear readable shapes, no UI text, no watermarks.",
+      "source": "minimax-base64"
+    }
+  ],
+  "audio": [],
+  "errors": [
+    "theme.mp3: The read operation timed out"
+  ]
+}

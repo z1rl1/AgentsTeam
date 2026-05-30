@@ -1,0 +1,19 @@
+{
+  "description": "платформер в стиле 90ых где главный герой ходит по городу прыгает бегает и бьет бандитов ударами, нужна красивая большая аркадная игра",
+  "title": "Городской Удар 90х",
+  "theme": "retro",
+  "user_id": "test-user",
+  "created_at": 1779471922,
+  "quality_threshold": 85,
+  "qa_score": 74,
+  "fixed_at": "2026-05-29T20:13:47.995641Z",
+  "fix_kept": false,
+  "fix_history": [
+    {
+      "fixed_at": "2026-05-29T20:13:47.995641Z",
+      "score_before": 74,
+      "score_after": 74,
+      "kept": false
+    }
+  ]
+}

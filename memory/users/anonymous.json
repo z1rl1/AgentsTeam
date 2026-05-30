@@ -1,0 +1,36 @@
+{
+  "user_id": "anonymous",
+  "games": [
+    {
+      "slug": "game-retro-3886",
+      "type": "status",
+      "theme": "retro",
+      "date": "2026-05-30T01:12:08.236913",
+      "url": "https://game-retro-3886.surge.sh"
+    },
+    {
+      "slug": "game-retro-4087",
+      "type": "status",
+      "theme": "retro",
+      "date": "2026-05-30T01:45:32.360819",
+      "url": "https://game-retro-4087.surge.sh"
+    },
+    {
+      "slug": "game-retro-5388",
+      "type": "status",
+      "theme": "retro",
+      "date": "2026-05-30T01:52:44.372892",
+      "url": "https://game-retro-5388.surge.sh"
+    },
+    {
+      "slug": "game-retro-9960",
+      "type": "status",
+      "theme": "retro",
+      "date": "2026-05-30T02:24:00.537893",
+      "url": "https://game-retro-9960.surge.sh"
+    }
+  ],
+  "favorite_theme": "retro",
+  "favorite_type": "status",
+  "total_games": 4
+}

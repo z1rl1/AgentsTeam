@@ -1,0 +1,37 @@
+{
+  "description": "Neon Space Shooter: космический шутер. Корабль пилота внизу экрана, двигается влево-вправо стрелками, стреляет пробелом. Враги сверху 3 типов: (1) маленький быстрый жук — летает хаотично, быстрый, слабое HP; (2) средний крейсер — летит прямо, стреляет в игрока, среднее HP; (3) большой босс — появляется каждые 5 волн, много HP, стреляет. Фон: параллакс из 2 слоёв звёздного неба. Бонусы: щит (синий), двойной выстрел (зелёный), бомба (красная). HUD: счёт слева, волна по центру, жизни справа (сердечки). При смерти врага — взрыв с частицами. При уроне — тряска экрана. Музыка с главного меню. Стиль: тёмный фон, неоновые цвета, glow-эффекты. Игра на русском.",
+  "title": "Neon Space Shooter v2",
+  "theme": "neon-space",
+  "user_id": "316330404",
+  "created_at": 1780091184,
+  "quality_threshold": 85,
+  "assets": {
+    "enabled": true,
+    "required": true,
+    "images": [
+      {
+        "type": "image",
+        "path": "assets/background.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/sprites.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/title.png",
+        "source": "minimax-base64"
+      }
+    ],
+    "audio": [
+      {
+        "type": "music",
+        "path": "assets/theme.mp3",
+        "source": "minimax-hex"
+      }
+    ],
+    "errors": []
+  }
+}

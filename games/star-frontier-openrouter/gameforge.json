@@ -1,0 +1,37 @@
+{
+  "description": "Neon space shooter 'Star Frontier'. Top-down view. Player spaceship at bottom center. WASD or arrows to move, space or autofire to shoot. Enemies fly from top in waves.\n\n3 enemy types: small bug (fast, 1 hit, zigzag), cruiser (medium, 3 hits, shoots back), boss every 5 waves (huge, 20 hits, 3 attack patterns, screen-wide explosion on death).\n\nPowerups drop from killed enemies: shield 5sec, triple shot 10sec, speed x2. Powerup blinks when expiring.\n\nVisual: dark space with parallax layers (distant stars slow, near stars faster). Muzzle flash on player when shooting. Sparks and glow on enemy hit. Enemy death: explosion of 20+ particles of varying size with fade. Player hit: screen shake 300ms. Player leaves fire trail behind.\n\nHUD: lives icons top-left, score top-center with shadow, wave number top-right, boss progress bar at bottom. All panels with translucent background and rounded corners.\n\nStart: title screen with animated stars, game title with glow effect, 'Press Enter to start'. Pause on ESC. Game over: final score, wave, restart button. Music from start, theme: electronic space.\n\nDifficulty increases: each wave enemies 5% faster, bosses get new attack each time. Combo multiplier for kills without taking damage.\n\nTheme: space. Colors: dark blue space, neon cyan for player, red for enemies, yellow explosions.",
+  "title": "Star Frontier",
+  "theme": "space",
+  "user_id": "316330404",
+  "created_at": 1780102298,
+  "quality_threshold": 85,
+  "assets": {
+    "enabled": true,
+    "required": true,
+    "images": [
+      {
+        "type": "image",
+        "path": "assets/background.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/sprites.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/title.png",
+        "source": "minimax-base64"
+      }
+    ],
+    "audio": [
+      {
+        "type": "music",
+        "path": "assets/theme.mp3",
+        "source": "minimax-hex"
+      }
+    ],
+    "errors": []
+  }
+}

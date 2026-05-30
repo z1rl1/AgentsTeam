@@ -1,0 +1,37 @@
+{
+  "description": "Simple space shooter. Player ship at bottom, moves left/right with arrows, shoots with space. Enemies come from top. Score and lives HUD. Game over screen. Russian UI. Dark space background with stars.",
+  "title": "Simple Space Shooter",
+  "theme": "space",
+  "user_id": "316330404",
+  "created_at": 1780102691,
+  "quality_threshold": 85,
+  "assets": {
+    "enabled": true,
+    "required": true,
+    "images": [
+      {
+        "type": "image",
+        "path": "assets/background.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/sprites.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/title.png",
+        "source": "minimax-base64"
+      }
+    ],
+    "audio": [
+      {
+        "type": "music",
+        "path": "assets/theme.mp3",
+        "source": "minimax-hex"
+      }
+    ],
+    "errors": []
+  }
+}

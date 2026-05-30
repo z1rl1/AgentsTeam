@@ -1,0 +1,37 @@
+{
+  "description": "Pixel tank battle. Top-down. Player green tank: WASD move, mouse aim, space shoot. Light/medium/heavy enemy tanks. Brick walls (destructible), metal blocks (solid), bushes. Star/ helmet/ bomb powerups. Waves. Pixel canvas explosions. HUD lives score wave. ESC menu. Russian.",
+  "title": "Pixel Tanks",
+  "theme": "retro",
+  "user_id": "316330404",
+  "created_at": 1780101511,
+  "quality_threshold": 85,
+  "assets": {
+    "enabled": true,
+    "required": true,
+    "images": [
+      {
+        "type": "image",
+        "path": "assets/background.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/sprites.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/title.png",
+        "source": "minimax-base64"
+      }
+    ],
+    "audio": [
+      {
+        "type": "music",
+        "path": "assets/theme.mp3",
+        "source": "minimax-hex"
+      }
+    ],
+    "errors": []
+  }
+}

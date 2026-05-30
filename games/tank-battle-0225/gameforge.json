@@ -1,0 +1,19 @@
+{
+  "description": "Top-down tank battle game. Player controls a tank from a top-down view, must destroy all enemy tanks on the level. Enemy tanks spawn at the top of the screen and gradually move down trying to destroy either the base (represented as an eagle) or the player's tank. Player can shoot bullets to destroy enemies. The base/eagle is located at the bottom center. Game includes multiple waves with increasing difficulty, score system, lives for player tank, start screen, game over and win screens.",
+  "title": "Танчики: Поле боя",
+  "theme": "retro",
+  "user_id": "316330404",
+  "created_at": 1779479302,
+  "quality_threshold": 85,
+  "qa_score": 74,
+  "fixed_at": "2026-05-29T20:27:05.626566Z",
+  "fix_kept": false,
+  "fix_history": [
+    {
+      "fixed_at": "2026-05-29T20:27:05.626566Z",
+      "score_before": 74,
+      "score_after": 74,
+      "kept": false
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "enabled": true,
+  "required": true,
+  "images": [
+    {
+      "type": "image",
+      "path": "assets/background.png",
+      "prompt": "wide gameplay background with depth, environment layers, cinematic composition, rich details, usable behind a canvas game. Game title: Mario Bros: Mushroom Kingdom. User request: Super Mario style platformer. Side-scrolling, move right to flagpole. Jump on enemies, break bricks, get mushroom to grow big, fire flower to shoot fireballs. 3 lives. VISUAL REQUIREMENTS: MUST draw player, enemies, blocks using ctx.drawImage from assets/sprites.png - NOT fillRect squares. Background must use assets/background.png. Characters must have proper sprite art: Mario with red blue clothes, goombas, koopas. All visual elements must be drawn from generated sprite sheets. Animated idle walk jump states. Responsive canvas that fills screen. 3 levels with scrolling camera. Parallax background. Rich pixel art style.. Theme: retro. High quality game art, clear readable shapes, no UI text, no watermarks.",
+      "source": "minimax-base64"
+    },
+    {
+      "type": "image",
+      "path": "assets/sprites.png",
+      "prompt": "sprite sheet concept art containing the main playable character plus enemies/objects from the request, full body, readable silhouettes, multiple poses, game-ready. Game title: Mario Bros: Mushroom Kingdom. User request: Super Mario style platformer. Side-scrolling, move right to flagpole. Jump on enemies, break bricks, get mushroom to grow big, fire flower to shoot fireballs. 3 lives. VISUAL REQUIREMENTS: MUST draw player, enemies, blocks using ctx.drawImage from assets/sprites.png - NOT fillRect squares. Background must use assets/background.png. Characters must have proper sprite art: Mario with red blue clothes, goombas, koopas. All visual elements must be drawn from generated sprite sheets. Animated idle walk jump states. Responsive canvas that fills screen. 3 levels with scrolling camera. Parallax background. Rich pixel art style.. Theme: retro. High quality game art, clear readable shapes, no UI text, no watermarks.",
+      "source": "minimax-base64"
+    },
+    {
+      "type": "image",
+      "path": "assets/title.png",
+      "prompt": "dramatic title/menu key art for the game, clean focal composition, no text, attractive first screen. Game title: Mario Bros: Mushroom Kingdom. User request: Super Mario style platformer. Side-scrolling, move right to flagpole. Jump on enemies, break bricks, get mushroom to grow big, fire flower to shoot fireballs. 3 lives. VISUAL REQUIREMENTS: MUST draw player, enemies, blocks using ctx.drawImage from assets/sprites.png - NOT fillRect squares. Background must use assets/background.png. Characters must have proper sprite art: Mario with red blue clothes, goombas, koopas. All visual elements must be drawn from generated sprite sheets. Animated idle walk jump states. Responsive canvas that fills screen. 3 levels with scrolling camera. Parallax background. Rich pixel art style.. Theme: retro. High quality game art, clear readable shapes, no UI text, no watermarks.",
+      "source": "minimax-base64"
+    }
+  ],
+  "audio": [
+    {
+      "type": "music",
+      "path": "assets/theme.mp3",
+      "prompt": "Instrumental looping game soundtrack for Mario Bros: Mushroom Kingdom. Super Mario style platformer. Side-scrolling, move right to flagpole. Jump on enemies, break bricks, get mushroom to grow big, fire flower to shoot fireballs. 3 lives. VISUAL REQUIREMENTS: MUST draw player, enemies, blocks using ctx.drawImage from assets/sprites.png - NOT fillRect squares. Background must use assets/background.png. Characters must have proper sprite art: Mario with red blue clothes, goombas, koopas. All visual elements must be drawn from generated sprite sheets. Animated idle walk jump states. Responsive canvas that fills screen. 3 levels with scrolling camera. Parallax background. Rich pixel art style.. Theme retro. Energetic, polished, suitable for browser arcade gameplay, no vocals.",
+      "source": "minimax-hex"
+    }
+  ],
+  "errors": []
+}

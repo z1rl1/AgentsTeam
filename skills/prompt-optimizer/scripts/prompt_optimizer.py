@@ -78,7 +78,7 @@ def cmd_analyze():
     # Failures
     failures = [e for e in entries if e["score"] < 60]
     if failures:
-        print(f"\n  Recent failures (score < 60%):")
+        print(f"\n  Recent failures (score < 85%):")
         for e in failures[-5:]:
             print(f"    {e['slug']} ({e['game_type']}/{e['theme']}) score={e['score']:.0f}%")
             if e.get("feedback"):

@@ -1,11 +1,43 @@
-# Local secrets and machine-specific config
+# ====== SECRETS — НИКОГДА не пушить ======
 .env
 .env.*
 !.env.example
+*.key
+secrets/
 
-# Python/runtime noise
+# ====== Python ======
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
+*.pyc
+.pytest_cache/
 
-# Local dependency folders
+# ====== Node ======
 node_modules/
+package-lock.json
+
+# ====== Бинарные ассеты игр (PNG/MP3 — большие файлы) ======
+games/*/assets/*.png
+games/*/assets/*.jpg
+games/*/assets/*.mp3
+games/*/assets/*.wav
+games/*/assets/*.ogg
+
+# ====== Бэкапы которые наделали ======
+*.bak
+
+# ====== Логи и метрики (много мусора) ======
+hooks/logs/
+hooks/metrics/
+
+# ====== Lock файлы генерации ======
+games/*/.gameforge.lock
+
+# ====== Кэш ======
+.cache/
+*.cache
+
+# ====== IDE ======
+.idea/
+.vscode/

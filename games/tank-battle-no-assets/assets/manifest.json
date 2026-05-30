@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "required": true,
+  "images": [],
+  "audio": [
+    {
+      "type": "music",
+      "path": "assets/theme.mp3",
+      "prompt": "Instrumental looping game soundtrack for Pixel Tank Battle. Pixel arcade tank battle game. Top-down view. Player controls GREEN tank: WASD movement, mouse for aiming, spacebar to shoot. Enemies: light tank (fast, 1 hit), medium tank (slow, 3 hits, shoots back), heavy tank (very slow, 5 hits, powerful shot). Map: destructible brick walls, indestructible metal blocks, bushes for hiding. Powerups: star (rapid fire), helmet (shield 5sec), bomb (all enemies). Waves increase. Pixel explosions on enemy death. All canvas-drawn pixel blocks: tanks 32x32, walls 16x16. HUD: lives top left, score center, wave right. Music from menu. ESC pause with menu button. Russian UI.. Theme retro. Energetic, polished, suitable for browser arcade gameplay, no vocals.",
+      "source": "minimax-hex"
+    }
+  ],
+  "errors": [
+    "background.png: MiniMax API error 2056: usage limit exceeded, daily usage limit reached for Token Plan Plus (50/50 used), resets at 2026-05-31T00:00:00Z",
+    "player-shoot.png: MiniMax API error 2056: usage limit exceeded, daily usage limit reached for Token Plan Plus (50/50 used), resets at 2026-05-31T00:00:00Z",
+    "title.png: MiniMax API error 2056: usage limit exceeded, daily usage limit reached for Token Plan Plus (50/50 used), resets at 2026-05-31T00:00:00Z",
+    "enemy.png: MiniMax API error 2056: usage limit exceeded, daily usage limit reached for Token Plan Plus (50/50 used), resets at 2026-05-31T00:00:00Z",
+    "enemy2.png: MiniMax API error 2056: usage limit exceeded, daily usage limit reached for Token Plan Plus (50/50 used), resets at 2026-05-31T00:00:00Z",
+    "player-idle.png: MiniMax API error 2056: usage limit exceeded, daily usage limit reached for Token Plan Plus (50/50 used), resets at 2026-05-31T00:00:00Z"
+  ]
+}

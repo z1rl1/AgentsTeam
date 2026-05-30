@@ -1,0 +1,22 @@
+{
+  "enabled": true,
+  "required": true,
+  "images": [],
+  "audio": [
+    {
+      "type": "music",
+      "path": "assets/theme.mp3",
+      "prompt": "Instrumental looping game soundtrack for Star Frontier. Neon space shooter 'Star Frontier'. Top-down. Player spaceship bottom center. WASD/arrows move, space autofire. Enemies from top in waves. 3 types: small zigzag (1hp), cruiser shoots back (3hp), boss every 5 waves (20hp, 3 patterns). Powerups: shield 5s, triple shot 10s, speed x2. Parallax stars, muzzle flash, 20+ particle explosions, screen shake on hit, fire trail. HUD: lives icons, score center, wave right, boss bar bottom. Title screen, ESC pause, game over screen. Music from start. Difficulty scales 5% per wave. Combo multiplier. Space theme, dark blue, neon cyan player, red enemies.. Theme space. Energetic, polished, suitable for browser arcade gameplay, no vocals.",
+      "source": "minimax-hex"
+    }
+  ],
+  "errors": [
+    "title.png: MiniMax API error 2056: usage limit exceeded, daily usage limit reached for Token Plan Plus (50/50 used), resets at 2026-05-31T00:00:00Z",
+    "player-shoot.png: MiniMax API error 2056: usage limit exceeded, daily usage limit reached for Token Plan Plus (50/50 used), resets at 2026-05-31T00:00:00Z",
+    "background.png: MiniMax API error 2056: usage limit exceeded, daily usage limit reached for Token Plan Plus (50/50 used), resets at 2026-05-31T00:00:00Z",
+    "player-idle.png: MiniMax API error 2056: usage limit exceeded, daily usage limit reached for Token Plan Plus (50/50 used), resets at 2026-05-31T00:00:00Z",
+    "enemy2.png: MiniMax API error 2056: usage limit exceeded, daily usage limit reached for Token Plan Plus (50/50 used), resets at 2026-05-31T00:00:00Z",
+    "enemy.png: MiniMax API error 2056: usage limit exceeded, daily usage limit reached for Token Plan Plus (50/50 used), resets at 2026-05-31T00:00:00Z"
+  ],
+  "quota_exhausted": true
+}

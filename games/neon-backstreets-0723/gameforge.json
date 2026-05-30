@@ -1,0 +1,19 @@
+{
+  "description": "Neon Backstreets - cinematic 2D side-scrolling beat-em-up action platformer in 90s arcade style with modern controls. Night city setting with rain, neon signs, alleyways, rooftops, metro, broken windows, street gangs. One large scrolling level with camera follow. Player character in red jacket: walk, run, jump, double jump, punch, kick, 3-hit combo, take damage, idle/run/jump/attack/hit animations. Combat: hitboxes, knockback, hit pause effect, particles/flashes, combo counter, score, player HP bar, enemy HP bars. 4 enemy types: melee bandit, jumping attacker, large tank enemy, ranged shooter. Each with HP, movement, attack, damage response, defeat animation, basic AI. Visual: rich pixel-art style canvas rendering with recognizable characters (head, body, limbs, clothes, poses). Rich backgrounds: windows, signs, pipes, cars, puddles, trash cans, graffiti, streetlights. Parallax scrolling. Juice: screen shake, flashes, particles, smooth camera, parallax. WebAudio sounds: hit, jump, damage, victory, defeat. Start screen, victory screen, defeat screen, pause, tutorial. Controls: A/D or arrows - move, Shift - run, Space/W/Up - jump, J - punch, K - kick, L - dash, P - pause, Enter - start/restart. Large responsive canvas, fullscreen feel. No external dependencies.",
+  "title": "Neon Backstreets",
+  "theme": "neon",
+  "user_id": "316330404",
+  "created_at": 1779523656,
+  "quality_threshold": 85,
+  "qa_score": 74,
+  "fixed_at": "2026-05-29T20:03:51.777529Z",
+  "fix_kept": false,
+  "fix_history": [
+    {
+      "fixed_at": "2026-05-29T20:03:51.777529Z",
+      "score_before": 74,
+      "score_after": 74,
+      "kept": false
+    }
+  ]
+}

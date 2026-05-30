@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meteor Courier</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0010;
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="game"></canvas>
+    <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const COLORS = {
+        bg: '#0a0010',
+        primary: '#ff00ff',
+        secondary: '#00ffff',
+        accent: '#ff006e',
+        text: '#ffffff'
+    };
+
+    const GAME_WIDTH = 960;
+    const GAME_HEIGHT = 540;
+    const LANE_COUNT = 4;
+    const LANE_WIDTH = 120;
+    const ROAD_WIDTH = LANE_COUNT * LANE_WIDTH;
+    const ROAD_X = (GAME_WIDTH - ROAD_WIDTH) / 2;
+
+    let scale = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    function resize() {
+        const ratio = GAME_WIDTH / GAME_HEIGHT;
+        const windowRatio = window.innerWidth / window.innerHeight;
+        if (windowRatio > ratio) {
+            scale = window.innerHeight / GAME_HEIGHT;
+        } else {
+            scale = window.innerWidth / GAME_WIDTH;
+        }
+        canvas.width = GAME_WIDTH;
+        canvas.height = GAME_HEIGHT;
+        canvas.style.width = (GAME_WIDTH * scale) + 'px';
+        canvas.style.height = (GAME_HEIGHT * scale) + 'px';
+        offsetX = (window.innerWidth - GAME_WIDTH * scale) / 2;
+        offsetY = (window.innerHeight - GAME_HEIGHT * scale) / 2;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const assets = {
+        background: { img: null, loaded: false },
+        sprites: { img: null, loaded: false },
+        title: { img: null, loaded: false }
+    };
+
+    function loadImage(name, src) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                assets[name].img = img;
+                assets[name].loaded = true;
+                resolve();
+            };
+            img.onerror = () => resolve();
+            img.src = src;
+        });
+    }
+
+    function drawCover(img, dx, dy, dw, dh) {
+        if (!img || !img.complete) return;
+        const imgRatio = img.width / img.height;
+        const drawRatio = dw / dh;
+        let sx, sy, sw, sh;
+        if (imgRatio > drawRatio) {
+            sh = img.height;
+            sw = sh * drawRatio;
+            sx = (img.width - sw) / 2;
+            sy = 0;
+        } else {
+            sw = img.width;
+            sh = sw / drawRatio;
+            sx = 0;
+            sy = (img.height - sh) / 2;
+        }
+        ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
+
+    function drawContain(img, dx, dy, dw, dh) {
+        if (!img || !img.complete) return;
+        const imgRatio = img.width / img.height;
+        const drawRatio = dw / dh;
+        let sx, sy, sw, sh;
+        if (imgRatio > drawRatio) {
+            sw = img.width;
+            sh = sw / drawRatio;
+            sx = 0;
+            sy = (img.height - sh) / 2;
+        } else {
+            sh = img.height;
+            sw = sh * drawRatio;
+            sx = (img.width - sw) / 2;
+            sy = 0;
+        }
+        ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
+
+    function drawSprite(sheet, sx, sy, sw, sh, dx, dy, dw, dh) {
+        if (!sheet || !sheet.complete) return;
+        ctx.drawImage(sheet, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        switch(type) {
+            case 'collect':
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+                break;
+            case 'hit':
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(55, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.25);
+                break;
+            case 'jump':
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+                break;
+            case 'boost':
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+                break;
+        }
+    }
+
+    const keys = {};
+    document.addEventListener('keydown', (e) => {
+        keys[e.code] = true;
+        if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+            e.preventDefault();
+        }
+    });
+    document.addEventListener('keyup', (e) => keys[e.code] = false);
+
+    let gameState = 'menu';
+    let score = 0;
+    let distance = 0;
+    let speed = 5;
+    let baseSpeed = 5;
+    let lives = 3;
+    let highScore = localStorage.getItem('meteorCourierHighScore') || 0;
+
+    const player = {
+        x: GAME_WIDTH / 2,
+        y: GAME_HEIGHT - 100,
+        width: 50,
+        height: 60,
+        lane: 1,
+        targetLane: 1,
+        vy: 0,
+        jumping: false,
+        ducking: false,
+        shieldTime: 0,
+        boostTime: 0,
+        invincible: 0,
+        frame: 0
+    };
+
+    let obstacles = [];
+    let pickups = [];
+    let particles = [];
+    let vehicles = [];
+    let drones = [];
+    let backgroundLayers = [];
+    let foregroundElements = [];
+
+    function initBackgroundLayers() {
+        backgroundLayers = [];
+        for (let i = 0; i < 5; i++) {
+            backgroundLayers.push({
+                speed: 0.2 + i * 0.15,
+                y: i * 20,
+                buildings: []
+            });
+            for (let j = 0; j < 10; j++) {
+                backgroundLayers[i].buildings.push({
+                    x: j * 120 - 100,
+                    width: 60 + Math.random() * 80,
+                    height: 100 + Math.random() * 200,
+                    windows: Math.floor(Math.random() * 8) + 3
+                });
+            }
+        }
+    }
+
+    function initForegroundElements() {
+        foregroundElements = [];
+        for (let i = 0; i < 15; i++) {
+            foregroundElements.push({
+                x: Math.random() * GAME_WIDTH,
+                y: GAME_HEIGHT - 20 - Math.random() * 30,
+                type: Math.random() > 0.5 ? 'barrier' : 'light'
+            });
+        }
+    }
+
+    function spawnObstacle() {
+        const type = Math.random();
+        const lane = Math.floor(Math.random() * LANE_COUNT);
+        
+        if (type < 0.4) {
+            obstacles.push({
+                x: ROAD_X + lane * LANE_WIDTH + LANE_WIDTH / 2,
+                y: -50,
+                width: 40,
+                height: 50,
+                type: 'drone',
+                lane: lane
+            });
+        } else if (type < 0.7) {
+            obstacles.push({
+                x: ROAD_X + lane * LANE_WIDTH + LANE_WIDTH / 2,
+                y: -50,
+                width: 50,
+                height: 40,
+                type: 'vehicle',
+                lane: lane
+            });
+        } else {
+            obstacles.push({
+                x: ROAD_X + lane * LANE_WIDTH + LANE_WIDTH / 2,
+                y: -30,
+                width: 60,
+                height: 30,
+                type: 'barrier',
+                lane: lane
+            });
+        }
+    }
+
+    function spawnPickup() {
+        const type = Math.random();
+        const lane = Math.floor(Math.random() * LANE_COUNT);
+        
+        if (type < 0.5) {
+            pickups.push({
+                x: ROAD_X + lane * LANE_WIDTH + LANE_WIDTH / 2,
+                y: -40,
+                width: 35,
+                height: 35,
+                type: 'meteor',
+                value: 100,
+                lane: lane
+            });
+        } else if (type < 0.8) {
+            pickups.push({
+                x: ROAD_X + lane * LANE_WIDTH + LANE_WIDTH / 2,
+                y: -30,
+                width: 40,
+                height: 30,
+                type: 'shield',
+                lane: lane
+            });
+        } else {
+            pickups.push({
+                x: ROAD_X + lane * LANE_WIDTH + LANE_WIDTH / 2,
+                y: -25,
+                width: 45,
+                height: 25,
+                type: 'boost',
+                lane: lane
+            });
+        }
+    }
+
+    function spawnVehicle() {
+        const lane = Math.floor(Math.random() * LANE_COUNT);
+        vehicles.push({
+            x: ROAD_X + lane * LANE_WIDTH + LANE_WIDTH / 2,
+            y: -100,
+            width: 55,
+            height: 70,
+            speed: speed * 0.7 + Math.random() * 2,
+            lane: lane
+        });
+    }
+
+    function spawnDrone() {
+        const lane = Math.floor(Math.random() * LANE_COUNT);
+        drones.push({
+            x: ROAD_X + lane * LANE_WIDTH + LANE_WIDTH / 2,
+            y: -60,
+            width: 45,
+            height: 35,
+            angle: 0,
+            lane: lane
+        });
+    }
+
+    function spawnParticles(x, y, color, count) {
+        for (let i = 0; i < count; i++) {
+            particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8,
+                life: 1,
+                color: color,
+                size: Math.random() * 4 + 2
+            });
+        }
+    }
+
+    function reset() {
+        player.x = GAME_WIDTH / 2;
+        player.y = GAME_HEIGHT - 100;
+        player.lane = 1;
+        player.targetLane = 1;
+        player.vy = 0;
+        player.jumping = false;
+        player.ducking = false;
+        player.shieldTime = 0;
+        player.boostTime = 0;
+        player.invincible = 0;
+        player.frame = 0;
+        
+        obstacles = [];
+        pickups = [];
+        particles = [];
+        vehicles = [];
+        drones = [];
+        
+        score = 0;
+        distance = 0;
+        speed = baseSpeed;
+        lives = 3;
+        
+        initBackgroundLayers();
+        initForegroundElements();
+    }
+
+    function update(dt) {
+        if (gameState !== 'playing') return;
+
+        distance += speed * dt;
+        score += Math.floor(speed * dt * 2);
+
+        speed = baseSpeed + Math.floor(distance / 500) * 0.3;
+        if (player.boostTime > 0) speed *= 1.5;
+
+        player.frame += dt * 10;
+
+        if (keys.ArrowLeft || keys.KeyA) {
+            if (player.targetLane > 0) player.targetLane--;
+            keys.ArrowLeft = false;
+            keys.KeyA = false;
+        }
+        if (keys.ArrowRight || keys.KeyD) {
+            if (player.targetLane < LANE_COUNT - 1) player.targetLane++;
+            keys.ArrowRight = false;
+            keys.KeyD = false;
+        }
+
+        const targetX = ROAD_X + player.targetLane * LANE_WIDTH + LANE_WIDTH / 2;
+        player.x += (targetX - player.x) * 10 * dt;
+        player.lane = player.targetLane;
+
+        if ((keys.ArrowUp || keys.KeyW || keys.Space) && !player.jumping && !player.ducking) {
+            player.vy = -500;
+            player.jumping = true;
+            playSound('jump');
+        }
+        if (keys.ArrowDown || keys.KeyS) {
+            player.ducking = true;
+        } else {
+            player.ducking = false;
+        }
+
+        player.vy += 1200 * dt;
+        player.y += player.vy * dt;
+
+        const groundY = GAME_HEIGHT - 100;
+        if (player.y > groundY) {
+            player.y = groundY;
+            player.vy = 0;
+            player.jumping = false;
+        }
+
+        if (player.shieldTime > 0) player.shieldTime -= dt;
+        if (player.boostTime > 0) player.boostTime -= dt;
+        if (player.invincible > 0) player.invincible -= dt;
+
+        for (let bg of backgroundLayers) {
+            for (let b of bg.buildings) {
+                b.x -= bg.speed * speed * dt * 20;
+                if (b.x + b.width < -50) {
+                    b.x = GAME_WIDTH + 50;
+                    b.height = 100 + Math.random() * 200;
+                }
+            }
+        }
+
+        for (let fg of foregroundElements) {
+            fg.x -= speed * 3 * dt;
+            if (fg.x < -50) {
+                fg.x = GAME_WIDTH + 50;
+            }
+        }
+
+        if (Math.random() < 0.02 * (speed / baseSpeed)) spawnObstacle();
+        if (Math.random() < 0.03) spawnPickup();
+        if (Math.random() < 0.01 * (speed / baseSpeed)) spawnVehicle();
+        if (Math.random() < 0.015) spawnDrone();
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            const obs = obstacles[i];
+            obs.y += speed * 60 * dt;
+
+            if (obs.y > GAME_HEIGHT + 100) {
+                obstacles.splice(i, 1);
+                continue;
+            }
+
+            const playerHeight = player.ducking ? player.height * 0.5 : player.height;
+            const playerY = player.ducking ? player.y + player.height * 0.5 : player.y;
+
+            if (player.invincible <= 0 && Math.abs(player.x - obs.x) < (player.width + obs.width) / 2 - 10 &&
+                playerY < obs.y + obs.height / 2 && playerY + playerHeight > obs.y - obs.height / 2) {
+                
+                if (player.shieldTime > 0) {
+                    player.shieldTime = 0;
+                    player.invincible = 1;
+                    spawnParticles(player.x, player.y, COLORS.secondary, 20);
+                    obstacles.splice(i, 1);
+                    playSound('hit');
+                } else {
+                    lives--;
+                    player.invincible = 2;
+                    spawnParticles(player.x, player.y, COLORS.accent, 30);
+                    playSound('hit');
+                    obstacles.splice(i, 1);
+                    
+                    if (lives <= 0) {
+                        gameState = 'gameover';
+                        if (score > highScore) {
+                            highScore = score;
+                            localStorage.setItem('meteorCourierHighScore', highScore);
+                        }
+                    }
+                }
+            }
+        }
+
+        for (let i = vehicles.length - 1; i >= 0; i--) {
+            const v = vehicles[i];
+            v.y += (speed - v.speed) * 60 * dt;
+
+            if (v.y > GAME_HEIGHT + 150) {
+                vehicles.splice(i, 1);
+                continue;
+            }
+
+            if (player.invincible <= 0 && Math.abs(player.x - v.x) < (player.width + v.width) / 2 - 15 &&
+                player.y < v.y + v.height / 2 && player.y + player.height > v.y - v.height / 2) {
+                lives--;
+                player.invincible = 2;
+                spawnParticles(player.x, player.y, COLORS.accent, 30);
+                playSound('hit');
+                vehicles.splice(i, 1);
+                
+                if (lives <= 0) {
+                    gameState = 'gameover';
+                    if (score > highScore) {
+                        highScore = score;
+                        localStorage.setItem('meteorCourierHighScore', highScore);
+                    }
+                }
+            }
+        }
+
+        for (let i = drones.length - 1; i >= 0; i--) {
+            const d = drones[i];
+            d.y += speed * 55 * dt;
+            d.angle += dt * 5;
+
+            if (d.y > GAME_HEIGHT + 80) {
+                drones.splice(i, 1);
+                continue;
+            }
+
+            if (player.invincible <= 0 && Math.abs(player.x - d.x) < (player.width + d.width) / 2 - 12 &&
+                player.y < d.y + d.height / 2 && player.y + player.height > d.y - d.height / 2) {
+                lives--;
+                player.invincible = 2;
+                spawnParticles(player.x, player.y, COLORS.accent, 25);
+                playSound('hit');
+                drones.splice(i, 1);
+                
+                if (lives <= 0) {
+                    gameState = 'gameover';
+                    if (score > highScore) {
+                        highScore = score;
+                        localStorage.setItem('meteorCourierHighScore', highScore);
+                    }
+                }
+            }
+        }
+
+        for (let i = pickups.length - 1; i >= 0; i--) {
+            const p = pickups[i];
+            p.y += speed * 60 * dt;
+
+            if (p.y > GAME_HEIGHT + 60) {
+                pickups.splice(i, 1);
+                continue;
+            }
+
+            if (Math.abs(player.x - p.x) < (player.width + p.width) / 2 - 5 &&
+                Math.abs(player.y - p.y) < (player.height + p.height) / 2 - 5) {
+                
+                if (p.type === 'meteor') {
+                    score += p.value;
+                    spawnParticles(p.x, p.y, COLORS.primary, 15);
+                    playSound('collect');
+                } else if (p.type === 'shield') {
+                    player.shieldTime = 8;
+                    spawnParticles(p.x, p.y, COLORS.secondary, 20);
+                    playSound('collect');
+                } else if (p.type === 'boost') {
+                    player.boostTime = 5;
+                    spawnParticles(p.x, p.y, COLORS.accent, 20);
+                    playSound('boost');
+                }
+                pickups.splice(i, 1);
+            }
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= dt * 2;
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        if (Math.random() < 0.3 && player.jumping) {
+            particles.push({
+                x: player.x + (Math.random() - 0.5) * 30,
+                y: player.y + player.height,
+                vx: -speed * 2,
+                vy: Math.random() * -2,
+                life: 0.5,
+                color: COLORS.secondary,
+                size: Math.random() * 3 + 1
+            });
+        }
+    }
+
+    function drawBackground() {
+        if (assets.background.loaded) {
+            drawCover(assets.background.img, 0, 0, GAME_WIDTH, GAME_HEIGHT);
+        } else {
+            const grad = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+            grad.addColorStop(0, '#1a0030');
+            grad.addColorStop(0.5, '#0a0010');
+            grad.addColorStop(1, '#150025');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+            for (let i = 0; i < 100; i++) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.2})`;
+                ctx.fillRect(Math.random() * GAME_WIDTH, Math.random() * GAME_HEIGHT * 0.6, 1, 1);
+            }
+        }
+
+        for (let i = backgroundLayers.length - 1; i >= 0; i--) {
+            const layer = backgroundLayers[i];
+            const alpha = 0.3 + i * 0.15;
+            
+            for (let b of layer.buildings) {
+                ctx.fillStyle = `rgba(20, 5, 35, ${alpha})`;
+                ctx.fillRect(b.x, GAME_HEIGHT - b.height - 100 + layer.y, b.width, b.height);
+                
+                for (let w = 0; w < b.windows; w++) {
+                    const wy = GAME_HEIGHT - b.height - 80 + layer.y + w * 25;
+                    const wx = b.x + 10 + Math.random() * (b.width - 30);
+                    ctx.fillStyle = Math.random() > 0.3 ? `rgba(255, 0, 255, ${0.3 + Math.random() * 0.4})` : `rgba(0, 255, 255, ${0.2 + Math.random() * 0.3})`;
+                    ctx.fillRect(wx, wy, 8, 12);
+                }
+            }
+        }
+
+        const roadGrad = ctx.createLinearGradient(ROAD_X - 50, 0, ROAD_X + ROAD_WIDTH + 50, 0);
+        roadGrad.addColorStop(0, 'rgba(10, 0, 20, 0.8)');
+        roadGrad.addColorStop(0.1, 'rgba(15, 5, 30, 0.9)');
+        roadGrad.addColorStop(0.9, 'rgba(15, 5, 30, 0.9)');
+        roadGrad.addColorStop(1, 'rgba(10, 0, 20, 0.8)');
+        ctx.fillStyle = roadGrad;
+        ctx.fillRect(ROAD_X - 50, 0, ROAD_WIDTH + 100, GAME_HEIGHT);
+
+        for (let i = 0; i < LANE_COUNT + 1; i++) {
+            ctx.strokeStyle = 'rgba(255, 0, 255, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([20, 15]);
+            ctx.beginPath();
+            ctx.moveTo(ROAD_X + i * LANE_WIDTH, GAME_HEIGHT - 200);
+            ctx.lineTo(ROAD_X + i * LANE_WIDTH, GAME_HEIGHT);
+            ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        ctx.strokeStyle = COLORS.primary;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(ROAD_X - 30, 0);
+        ctx.lineTo(ROAD_X - 30, GAME_HEIGHT);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(ROAD_X + ROAD_WIDTH + 30, 0);
+        ctx.lineTo(ROAD_X + ROAD_WIDTH + 30, GAME_HEIGHT);
+        ctx.stroke();
+
+        const gridOffset = (distance * 2) % 40;
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.15)';
+        ctx.lineWidth = 1;
+        for (let y = GAME_HEIGHT - 200; y < GAME_HEIGHT; y += 40) {
+            ctx.beginPath();
+            ctx.moveTo(ROAD_X, y + gridOffset);
+            ctx.lineTo(ROAD_X + ROAD_WIDTH, y + gridOffset);
+            ctx.stroke();
+        }
+
+        for (let fg of foregroundElements) {
+            if (fg.type === 'light') {
+                ctx.fillStyle = COLORS.primary;
+                ctx.shadowColor = COLORS.primary;
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.arc(fg.x, fg.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            } else {
+                ctx.fillStyle = 'rgba(30, 10, 40, 0.8)';
+                ctx.fillRect(fg.x, fg.y, 30, 15);
+                ctx.fillStyle = COLORS.accent;
+                ctx.fillRect(fg.x + 5, fg.y + 3, 20, 3);
+            }
+        }
+    }
+
+    function drawPlayer() {
+        const px = player.x - player.width / 2;
+        const py = player.y;
+        const pw = player.width;
+        const ph = player.ducking ? player.height * 0.5 : player.height;
+
+        if (player.invincible > 0 && Math.floor(player.invincible * 10) % 2 === 0) {
+            ctx.globalAlpha = 0.5;
+        }
+
+        if (assets.sprites.loaded) {
+            const frame = Math.floor(player.frame) % 4;
+            const spriteY = player.ducking ? 60 : 0;
+            drawSprite(assets.sprites.img, frame * 50, spriteY, 50, 60, px, py, pw, ph);
+        } else {
+            ctx.save();
+            ctx.translate(player.x, py + ph / 2);
+            
+            ctx.fillStyle = player.shieldTime > 0 ? COLORS.secondary : COLORS.primary;
+            ctx.shadowColor = player.shieldTime > 0 ? COLORS.secondary : COLORS.primary;
+            ctx.shadowBlur = 20;
+            
+            ctx.beginPath();
+            ctx.moveTo(0, -ph / 2 + 10);
+            ctx.lineTo(pw / 2 - 10, 0);
+            ctx.lineTo(pw / 2 - 10, ph / 2 - 10);
+            ctx.lineTo(-pw / 2 + 10, ph / 2 - 10);
+            ctx.lineTo(-pw / 2 + 10, 0);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.fillStyle = COLORS.secondary;
+            ctx.beginPath();
+            ctx.arc(0, -5, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(-5, -15, 10, 6);
+            
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = COLORS.accent;
+            ctx.fillRect(-pw / 2, ph / 2 - 5, pw, 5);
+            
+            ctx.restore();
+        }
+
+        if (player.shieldTime > 0) {
+            ctx.strokeStyle = COLORS.secondary;
+            ctx.lineWidth = 3;
+            ctx.shadowColor = COLORS.secondary;
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(player.x, py + ph / 2, pw, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+
+        if (player.boostTime > 0) {
+            ctx.fillStyle = COLORS.accent;
+            ctx.shadowColor = COLORS.accent;
+            ctx.shadowBlur = 20;
+            for (let i = 0; i < 5; i++) {
+                const ox = (Math.random() - 0.5) * 20;
+                const oy = ph + 5 + Math.random() * 20;
+                ctx.beginPath();
+                ctx.arc(player.x + ox, py + oy, 3 + Math.random() * 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.shadowBlur = 0;
+        }
+
+        ctx.globalAlpha = 1;
+    }
+
+    function drawObstacles() {
+        for (let obs of obstacles) {
+            if (obs.type === 'drone') {
+                if (assets.sprites.loaded) {
+                    drawSprite(assets.sprites.img, 200, 60, 45, 35, obs.x - obs.width / 2, obs.y - obs.height / 2, obs.width, obs.height);
+                } else {
+                    ctx.fillStyle = '#333344';
+                    ctx.shadowColor = COLORS.accent;
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.ellipse(obs.x, obs.y, obs.width / 2, obs.height / 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = COLORS.accent;
+                    ctx.fillRect(obs.x - obs.width / 2, obs.y - 5, obs.width, 10);
+                    
+                    ctx.fillStyle = '#ff0066';
+                    ctx.beginPath();
+                    ctx.arc(obs.x - 12, obs.y - 8, 4, 0, Math.PI * 2);
+                    ctx.arc(obs.x + 12, obs.y - 8, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            } else if (obs.type === 'vehicle') {
+                if (assets.sprites.loaded) {
+                    drawSprite(assets.sprites.img, 250, 60, 55, 70, obs.x - obs.width / 2, obs.y - obs.height / 2, obs.width, obs.height);
+                } else {
+                    ctx.fillStyle = '#2a2a3a';
+                    ctx.shadowColor = COLORS.primary;
+                    ctx.shadowBlur = 8;
+                    ctx.fillRect(obs.x - obs.width / 2, obs.y - obs.height / 2, obs.width, obs.height);
+                    
+                    ctx.fillStyle = '#ff0066';
+                    ctx.fillRect(obs.x - obs.width / 2, obs.y - obs.height / 2 + 5, 8, 15);
+                    ctx.fillRect(obs.x + obs.width / 2 - 8, obs.y - obs.height / 2 + 5, 8, 15);
+                    
+                    ctx.fillStyle = '#555566';
+                    ctx.fillRect(obs.x - obs.width / 2 + 10, obs.y - obs.height / 2 + 5, obs.width - 20, 20);
+                    ctx.shadowBlur = 0;
+                }
+            } else {
+                ctx.fillStyle = '#1a1a2a';
+                ctx.shadowColor = COLORS.primary;
+                ctx.shadowBlur = 5;
+                ctx.fillRect(obs.x - obs.width / 2, obs.y - obs.height / 2, obs.width, obs.height);
+                
+                ctx.fillStyle = COLORS.primary;
+                for (let i = 0; i < 3; i++) {
+                    ctx.fillRect(obs.x - obs.width / 2 + 5 + i * 18, obs.y - 5, 12, 10);
+                }
+                ctx.shadowBlur = 0;
+            }
+        }
+    }
+
+    function drawVehicles() {
+        for (let v of vehicles) {
+            if (assets.sprites.loaded) {
+                drawSprite(assets.sprites.img, 300, 60, 55, 70, v.x - v.width / 2, v.y - v.height / 2, v.width, v.height);
+            } else {
+                ctx.fillStyle = '#252535';
+                ctx.shadowColor = COLORS.secondary;
+                ctx.shadowBlur = 12;
+                ctx.fillRect(v.x - v.width / 2, v.y - v.height / 2, v.width, v.height);
+                
+                ctx.fillStyle = COLORS.secondary;
+                ctx.fillRect(v.x - v.width / 2 + 5, v.y + v.height / 2 - 10, 15, 8);
+                ctx.fillRect(v.x + v.width / 2 - 20, v.y + v.height / 2 - 10, 15, 8);
+                
+                ctx.fillStyle = '#444455';
+                ctx.fillRect(v.x - 15, v.y - v.height / 2 + 10, 30, 20);
+                ctx.shadowBlur = 0;
+            }
+        }
+    }
+
+    function drawDrones() {
+        for (let d of drones) {
+            ctx.save();
+            ctx.translate(d.x, d.y);
+            ctx.rotate(Math.sin(d.angle) * 0.2);
+            
+            ctx.fillStyle = '#3a3a4a';
+            ctx.shadowColor = COLORS.accent;
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.moveTo(0, -d.height / 2);
+            ctx.lineTo(d.width / 2, d.height / 4);
+            ctx.lineTo(d.width / 3, d.height / 2);
+            ctx.lineTo(-d.width / 3, d.height / 2);
+            ctx.lineTo(-d.width / 2, d.height / 4);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.fillStyle = COLORS.accent;
+            ctx.beginPath();
+            ctx.arc(0, 0, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            ctx.restore();
+        }
+    }
+
+    function drawPickups() {
+        for (let p of pickups) {
+            const pulse = Math.sin(Date.now() / 150) * 0.2 + 1;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.scale(pulse, pulse);
+            
+            if (p.type === 'meteor') {
+                if (assets.sprites.loaded) {
+                    drawSprite(assets.sprites.img, 150, 0, 35, 35, -p.width / 2, -p.height / 2, p.width, p.height);
+                } else {
+                    ctx.fillStyle = COLORS.primary;
+                    ctx.shadowColor = COLORS.primary;
+                    ctx.shadowBlur = 15;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = COLORS.accent;
+                    ctx.beginPath();
+                    ctx.arc(-5, -5, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = COLORS.secondary;
+                    ctx.beginPath();
+                    ctx.arc(5, 3, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (p.type === 'shield') {
+                ctx.fillStyle = COLORS.secondary;
+                ctx.shadowColor = COLORS.secondary;
+                ctx.shadowBlur = 20;
+                
+                ctx.beginPath();
+                ctx.arc(0, 0, 12, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.strokeStyle = COLORS.secondary;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(0, 0, 18, -Math.PI * 0.7, Math.PI * 0.7);
+                ctx.stroke();
+            } else {
+                ctx.fillStyle = COLORS.accent;
+                ctx.shadowColor = COLORS.accent;
+                ctx.shadowBlur = 18;
+                
+                ctx.fillRect(-p.width / 2, -p.height / 2, p.width, p.height);
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.moveTo(0, -8);
+                ctx.lineTo(5, 5);
+                ctx.lineTo(-5, 5);
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            ctx.restore();
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    function drawParticles() {
+        for (let p of particles) {
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.life;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    function drawHUD() {
+        ctx.fillStyle = 'rgba(10, 0, 20, 0.7)';
+        ctx.fillRect(10, 10, 200, 80);
+        ctx.strokeStyle = COLORS.primary;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(10, 10, 200, 80);
+
+        ctx.fillStyle = COLORS.text;
+        ctx.font = 'bold 24px "Segoe UI", system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('SCORE: ' + score.toLocaleString(), 25, 40);
+        
+        ctx.fillStyle = COLORS.secondary;
+        ctx.font = '16px "Segoe UI", system-ui, sans-serif';
+        ctx.fillText('Distance: ' + Math.floor(distance / 10) + 'm', 25, 65);
+
+        ctx.fillStyle = 'rgba(10, 0, 20, 0.7)';
+        ctx.fillRect(GAME_WIDTH - 160, 10, 150, 50);
+        ctx.strokeStyle = COLORS.accent;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(GAME_WIDTH - 160, 10, 150, 50);
+
+        ctx.fillStyle = COLORS.text;
+        ctx.font = 'bold 18px "Segoe UI", system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('LIVES: ', GAME_WIDTH - 120, 42);
+
+        for (let i = 0; i < lives; i++) {
+            ctx.fillStyle = COLORS.accent;
+            ctx.beginPath();
+            ctx.arc(GAME_WIDTH - 65 + i * 25, 38, 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.fillStyle = 'rgba(10, 0, 20, 0.7)';
+        ctx.fillRect(10, GAME_HEIGHT - 40, 200, 30);
+        ctx.fillStyle = COLORS.secondary;
+        ctx.font = '14px "Segoe UI", system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('Speed: ' + speed.toFixed(1) + 'x', 20, GAME_HEIGHT - 18);
+
+        if (player.shieldTime > 0) {
+            ctx.fillStyle = COLORS.secondary;
+            ctx.fillRect(220, 15, 100 * (player.shieldTime / 8), 15);
+            ctx.strokeStyle = COLORS.secondary;
+            ctx.strokeRect(220, 15, 100, 15);
+            ctx.fillStyle = COLORS.text;
+            ctx.font = '10px "Segoe UI", system-ui, sans-serif';
+            ctx.fillText('SHIELD', 230, 26);
+        }
+
+        if (player.boostTime > 0) {
+            ctx.fillStyle = COLORS.accent;
+            ctx.fillRect(220, 35, 100 * (player.boostTime / 5), 15);
+            ctx.strokeStyle = COLORS.accent;
+            ctx.strokeRect(220, 35, 100, 15);
+            ctx.fillStyle = COLORS.text;
+            ctx.fillText('BOOST', 230, 46);
+        }
+    }
+
+    function drawMenu() {
+        if (assets.title.loaded) {
+            drawCover(assets.title.img, GAME_WIDTH / 2 - 200, 50, 400, 150);
+        } else {
+            ctx.fillStyle = COLORS.primary;
+            ctx.shadowColor = COLORS.primary;
+            ctx.shadowBlur = 30;
+            ctx.font = 'bold 72px "Segoe UI", system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('METEOR', GAME_WIDTH / 2, 130);
+            
+            ctx.fillStyle = COLORS.secondary;
+            ctx.shadowColor = COLORS.secondary;
+            ctx.fillText('COURIER', GAME_WIDTH / 2, 200);
+            ctx.shadowBlur = 0;
+        }
+
+        ctx.fillStyle = 'rgba(10, 0, 20, 0.8)';
+        ctx.fillRect(GAME_WIDTH / 2 - 180, 230, 360, 250);
+        ctx.strokeStyle = COLORS.primary;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(GAME_WIDTH / 2 - 180, 230, 360, 250);
+
+        ctx.fillStyle = COLORS.text;
+        ctx.font = 'bold 24px "Segoe UI", system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('CYBERPUNK RUNNER', GAME_WIDTH / 2, 270);
+
+        ctx.fillStyle = COLORS.secondary;
+        ctx.font = '18px "Segoe UI", system-ui, sans-serif';
+        ctx.fillText('High Score: ' + highScore.toLocaleString(), GAME_WIDTH / 2, 310);
+
+        ctx.fillStyle = COLORS.text;
+        ctx.font = '16px "Segoe UI", system-ui, sans-serif';
+        ctx.fillText('← → or A/D: Change Lane', GAME_WIDTH / 2, 350);
+        ctx.fillText('↑ or SPACE: Jump', GAME_WIDTH / 2, 375);
+        ctx.fillText('↓ or S: Duck', GAME_WIDTH / 2, 400);
+
+        const pulse = Math.sin(Date.now() / 300) * 0.3 + 0.7;
+        ctx.fillStyle = `rgba(255, 0, 255, ${pulse})`;
+        ctx.font = 'bold 28px "Segoe UI", system-ui, sans-serif';
+        ctx.fillText('PRESS SPACE TO START', GAME_WIDTH / 2, 455);
+
+        ctx.strokeStyle = COLORS.primary;
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 8; i++) {
+            const angle = (Date.now() / 1000 + i * Math.PI / 4) % (Math.PI * 2);
+            const x = GAME_WIDTH / 2 + Math.cos(angle) * 200;
+            const y = 400 + Math.sin(angle) * 100;
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+    }
+
+    function drawGameOver() {
+        ctx.fillStyle = 'rgba(10, 0, 20, 0.85)';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        ctx.fillStyle = COLORS.accent;
+        ctx.shadowColor = COLORS.accent;
+        ctx.shadowBlur = 30;
+        ctx.font = 'bold 64px "Segoe UI", system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', GAME_WIDTH / 2, 180);
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = COLORS.text;
+        ctx.font = 'bold 32px "Segoe UI", system-ui, sans-serif';
+        ctx.fillText('Final Score: ' + score.toLocaleString(), GAME_WIDTH / 2, 250);
+
+        ctx.fillStyle = COLORS.secondary;
+        ctx.font = '24px "Segoe UI", system-ui, sans-serif';
+        ctx.fillText('Distance: ' + Math.floor(distance / 10) + 'm', GAME_WIDTH / 2, 300);
+
+        if (score >= highScore) {
+            ctx.fillStyle = COLORS.primary;
+            ctx.font = 'bold 28px "Segoe UI", system-ui, sans-serif';
+            ctx.fillText('NEW HIGH SCORE!', GAME_WIDTH / 2, 350);
+        } else {
+            ctx.fillStyle = COLORS.text;
+            ctx.font = '20px "Segoe UI", system-ui, sans-serif';
+            ctx.fillText('High Score: ' + highScore.toLocaleString(), GAME_WIDTH / 2, 350);
+        }
+
+        ctx.fillStyle = 'rgba(255, 0, 255, 0.8)';
+        ctx.fillRect(GAME_WIDTH / 2 - 150, 390, 300, 50);
+        ctx.strokeStyle = COLORS.primary;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(GAME_WIDTH / 2 - 150, 390, 300, 50);
+        
+        ctx.fillStyle = COLORS.text;
+        ctx.font = 'bold 22px "Segoe UI", system-ui, sans-serif';
+        ctx.fillText('PRESS SPACE TO RESTART', GAME_WIDTH / 2, 423);
+    }
+
+    let lastTime = 0;
+    function gameLoop(timestamp) {
+        const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
+        lastTime = timestamp;
+
+        if (gameState === 'menu') {
+            drawBackground();
+            drawMenu();
+            
+            if (keys.Space) {
+                gameState = 'playing';
+                reset();
+                keys.Space = false;
+            }
+        } else if (gameState === 'playing') {
+            update(dt);
+            
+            ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            drawBackground();
+            drawVehicles();
+            drawObstacles();
+            drawDrones();
+            drawPickups();
+            drawPlayer();
+            drawParticles();
+            drawHUD();
+        } else if (gameState === 'gameover') {
+            ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            drawBackground();
+            drawGameOver();
+            
+            if (keys.Space) {
+                gameState = 'playing';
+                reset();
+                keys.Space = false;
+            }
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    async function init() {
+        await Promise.all([
+            loadImage('background', 'assets/background.png'),
+            loadImage('sprites', 'assets/sprites.png'),
+            loadImage('title', 'assets/title.png')
+        ]);
+
+        initBackgroundLayers();
+        initForegroundElements();
+        
+        if (audioCtx.state === 'suspended') {
+            document.addEventListener('click', () => audioCtx.resume(), { once: true });
+            document.addEventListener('keydown', () => audioCtx.resume(), { once: true });
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    init();
+    </script>
+</body>
+</html>

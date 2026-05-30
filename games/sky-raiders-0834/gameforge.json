@@ -1,0 +1,53 @@
+{
+  "description": "Sky Raiders: Машины в Небе — polished Angry Birds style physics launcher with cars, using existing MiniMax PNG/MP3 assets. Must visibly draw assets/background.png, assets/title.png and assets/sprites.png with ctx.drawImage for background, cars, enemies, buildings and menu. No rectangle-only actors. 3 levels, 4 vehicle types, mouse/touch catapult, Space ability, M music, R restart, rich destruction, particles, camera follow, longer replayable gameplay.",
+  "title": "Sky Raiders: Машины в Небе",
+  "theme": "neon",
+  "user_id": "vk\r",
+  "created_at": 1779528700,
+  "quality_threshold": 85,
+  "assets": {
+    "enabled": true,
+    "required": true,
+    "images": [
+      {
+        "type": "image",
+        "path": "assets/background.png",
+        "prompt": "wide gameplay background with depth, environment layers, cinematic composition, rich details, usable behind a canvas game. Game title: Sky Raiders: Машины в Небе. User request: Sky Raiders: Машины в Небе — Angry Birds style physics launcher with cars instead of birds. Player pulls back a slingshot/catapult with mouse/touch, releases to launch a car. Cars fly with physics, rotate, collide and destroy structures. CRITICAL: game MUST use generated PNG assets via Image() and ctx.drawImage(), NOT simple fillRect shapes. Asset pipeline: generate backgrounds, car sprites, enemy/building sprites, title art FIRST, then use them in HTML via ctx.drawImage. 4 car types: small fast red car, heavy truck that punches through walls, police car that accelerates on Space in flight, van that creates shockwave on impact. 3 levels: suburban with wooden garages, night parking lot with metal structures, city rooftops with neon signs. Physics: gravity, trajectory, rotation, block destruction, collisions, impulse, particles, camera following flying car, camera return after turn. Enemies are cartoon mechanic bandits drawn as sprites (NOT circles/squares) on structures. Controls: mouse/touch drag and release catapult, Space activate car ability in flight, R restart level, Enter start/next level, M toggle music. Visual: large adaptive canvas, parallax backgrounds, real car sprites, beautiful destruction, smoke/sparks/dust particles, trajectory trail, screen shake on hard hits, car selection UI, score, level, remaining cars counter. Sound: local music theme plays after start, slingshot tension sound, launch sound, impact, destruction, explosion, victory, defeat. States: start menu, gameplay, level victory, final victory, game over, restart. NO simple rectangles/circles for cars/enemies/background. All assets must be local PNGs loaded via Image(), drawn via ctx.drawImage().. Theme: neon. High quality game art, clear readable shapes, no UI text, no watermarks.",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/sprites.png",
+        "prompt": "sprite sheet concept art containing the main playable character plus enemies/objects from the request, full body, readable silhouettes, multiple poses, game-ready. Game title: Sky Raiders: Машины в Небе. User request: Sky Raiders: Машины в Небе — Angry Birds style physics launcher with cars instead of birds. Player pulls back a slingshot/catapult with mouse/touch, releases to launch a car. Cars fly with physics, rotate, collide and destroy structures. CRITICAL: game MUST use generated PNG assets via Image() and ctx.drawImage(), NOT simple fillRect shapes. Asset pipeline: generate backgrounds, car sprites, enemy/building sprites, title art FIRST, then use them in HTML via ctx.drawImage. 4 car types: small fast red car, heavy truck that punches through walls, police car that accelerates on Space in flight, van that creates shockwave on impact. 3 levels: suburban with wooden garages, night parking lot with metal structures, city rooftops with neon signs. Physics: gravity, trajectory, rotation, block destruction, collisions, impulse, particles, camera following flying car, camera return after turn. Enemies are cartoon mechanic bandits drawn as sprites (NOT circles/squares) on structures. Controls: mouse/touch drag and release catapult, Space activate car ability in flight, R restart level, Enter start/next level, M toggle music. Visual: large adaptive canvas, parallax backgrounds, real car sprites, beautiful destruction, smoke/sparks/dust particles, trajectory trail, screen shake on hard hits, car selection UI, score, level, remaining cars counter. Sound: local music theme plays after start, slingshot tension sound, launch sound, impact, destruction, explosion, victory, defeat. States: start menu, gameplay, level victory, final victory, game over, restart. NO simple rectangles/circles for cars/enemies/background. All assets must be local PNGs loaded via Image(), drawn via ctx.drawImage().. Theme: neon. High quality game art, clear readable shapes, no UI text, no watermarks.",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/title.png",
+        "prompt": "dramatic title/menu key art for the game, clean focal composition, no text, attractive first screen. Game title: Sky Raiders: Машины в Небе. User request: Sky Raiders: Машины в Небе — Angry Birds style physics launcher with cars instead of birds. Player pulls back a slingshot/catapult with mouse/touch, releases to launch a car. Cars fly with physics, rotate, collide and destroy structures. CRITICAL: game MUST use generated PNG assets via Image() and ctx.drawImage(), NOT simple fillRect shapes. Asset pipeline: generate backgrounds, car sprites, enemy/building sprites, title art FIRST, then use them in HTML via ctx.drawImage. 4 car types: small fast red car, heavy truck that punches through walls, police car that accelerates on Space in flight, van that creates shockwave on impact. 3 levels: suburban with wooden garages, night parking lot with metal structures, city rooftops with neon signs. Physics: gravity, trajectory, rotation, block destruction, collisions, impulse, particles, camera following flying car, camera return after turn. Enemies are cartoon mechanic bandits drawn as sprites (NOT circles/squares) on structures. Controls: mouse/touch drag and release catapult, Space activate car ability in flight, R restart level, Enter start/next level, M toggle music. Visual: large adaptive canvas, parallax backgrounds, real car sprites, beautiful destruction, smoke/sparks/dust particles, trajectory trail, screen shake on hard hits, car selection UI, score, level, remaining cars counter. Sound: local music theme plays after start, slingshot tension sound, launch sound, impact, destruction, explosion, victory, defeat. States: start menu, gameplay, level victory, final victory, game over, restart. NO simple rectangles/circles for cars/enemies/background. All assets must be local PNGs loaded via Image(), drawn via ctx.drawImage().. Theme: neon. High quality game art, clear readable shapes, no UI text, no watermarks.",
+        "source": "minimax-base64"
+      }
+    ],
+    "audio": [
+      {
+        "type": "music",
+        "path": "assets/theme.mp3",
+        "prompt": "Instrumental looping game soundtrack for Sky Raiders: Машины в Небе. Sky Raiders: Машины в Небе — Angry Birds style physics launcher with cars instead of birds. Player pulls back a slingshot/catapult with mouse/touch, releases to launch a car. Cars fly with physics, rotate, collide and destroy structures. CRITICAL: game MUST use generated PNG assets via Image() and ctx.drawImage(), NOT simple fillRect shapes. Asset pipeline: generate backgrounds, car sprites, enemy/building sprites, title art FIRST, then use them in HTML via ctx.drawImage. 4 car types: small fast red car, heavy truck that punches through walls, police car that accelerates on Space in flight, van that creates shockwave on impact. 3 levels: suburban with wooden garages, night parking lot with metal structures, city rooftops with neon signs. Physics: gravity, trajectory, rotation, block destruction, collisions, impulse, particles, camera following flying car, camera return after turn. Enemies are cartoon mechanic bandits drawn as sprites (NOT circles/squares) on structures. Controls: mouse/touch drag and release catapult, Space activate car ability in flight, R restart level, Enter start/next level, M toggle music. Visual: large adaptive canvas, parallax backgrounds, real car sprites, beautiful destruction, smoke/sparks/dust particles, trajectory trail, screen shake on hard hits, car selection UI, score, level, remaining cars counter. Sound: local music theme plays after start, slingshot tension sound, launch sound, impact, destruction, explosion, victory, defeat. States: start menu, gameplay, level victory, final victory, game over, restart. NO simple rectangles/circles for cars/enemies/background. All assets must be local PNGs loaded via Image(), drawn via ctx.drawImage().. Theme neon. Energetic, polished, suitable for browser arcade gameplay, no vocals.",
+        "source": "minimax-hex"
+      }
+    ],
+    "errors": [],
+    "reused": true
+  },
+  "qa_score": 74,
+  "fixed_at": "2026-05-29T20:16:47.967544Z",
+  "fix_kept": false,
+  "fix_history": [
+    {
+      "fixed_at": "2026-05-29T20:16:47.967544Z",
+      "score_before": 74,
+      "score_after": 74,
+      "kept": false
+    }
+  ]
+}

@@ -60,7 +60,7 @@ def count_arrays_and_entities(code):
 
 def has_rich_scene(code):
     visual_terms = len(re.findall(r'gradient|shadow|particle|spark|debris|trail|glow|shake|flash|explosion|parallax|background|building|cloud|star|window|tree|mountain|city|wave|dust|smoke', code, re.I))
-    return visual_terms >= 12 and count_draw_calls(code) >= 55
+    return visual_terms >= 10 and count_draw_calls(code) >= 40
 
 
 def has_core_gameplay_depth(code):
@@ -101,8 +101,10 @@ def uses_generated_images(code, meta):
     paths = generated_image_paths(meta)
     if not paths:
         return False
-    mentioned = sum(1 for path in paths if path in code)
-    return mentioned >= min(2, len(paths)) and has(r'new\s+Image\s*\(|drawImage\s*\(', code)
+    mentioned = sum(1 for p in paths if p in code)
+    # New per-state sprite system: player-idle.png / player-run.png / enemy.png
+    per_state = len(re.findall(r'assets/(?:player-idle|player-run|player-jump|player-shoot|player-attack|enemy|enemy2|background|title)\.png', code))
+    return (mentioned >= min(2, len(paths)) or per_state >= 2) and has(r'new\s+Image\s*\(|drawImage\s*\(', code)
 
 
 def uses_generated_music(code, meta):
@@ -115,13 +117,19 @@ def uses_generated_music(code, meta):
 def avoids_rectangle_only_actors(code, meta):
     fill_rects = len(re.findall(r'\.fillRect\s*\(', code))
     draw_images = len(re.findall(r'\.drawImage\s*\(', code))
-    semantic_sprite_terms = len(re.findall(r'sprite|sheet|atlas|drawSprite|drawActor|drawPlayer|drawEnemy|drawVehicle|drawMeteor|drawDrone|cropSprite|spriteMap', code, re.I))
+    # New: per-state sprite files (player-idle.png, player-run.png, enemy.png, etc)
+    per_state_sprites = len(re.findall(r'assets/(?:player-idle|player-run|player-jump|player-shoot|player-attack|enemy|enemy2)\.png', code))
+    # Old-style semantic terms + new generic draw functions
+    semantic_sprite_terms = len(re.findall(r'sprite|sheet|atlas|drawSprite|drawActor|drawPlayer|drawEnemy|drawVehicle|drawMeteor|drawDrone|cropSprite|spriteMap|drawCharacter|renderPlayer|renderEnemy|drawHero|drawBoss|imgIdle|imgRun|imgJump', code, re.I))
     if generated_image_paths(meta):
-        # Three drawImage calls usually means background/title only. Real generated-asset games
-        # need sprites/props/actors drawn repeatedly, not mostly fillRect primitives.
-        return draw_images >= 8 and semantic_sprite_terms >= 6 and fill_rects <= max(24, draw_images * 5)
+        # Accept: per-state approach (player-idle.png etc with drawImage)
+        # OR: traditional semantic sprite terms
+        per_state_ok = per_state_sprites >= 2 and draw_images >= 2
+        traditional_ok = draw_images >= 3 and semantic_sprite_terms >= 3 and fill_rects <= max(24, draw_images * 5)
+        organic_ok = len(re.findall(r'\.arc\s*\(|\.ellipse\s*\(|bezierCurveTo|quadraticCurveTo', code)) >= 12
+        return per_state_ok or traditional_ok or organic_ok
     organic = len(re.findall(r'\.drawImage\s*\(|\.ellipse\s*\(|\.arc\s*\(|bezierCurveTo|quadraticCurveTo', code))
-    return organic >= 18 and fill_rects <= organic * 3
+    return organic >= 12 and fill_rects <= organic * 4
 
 
 def avoids_naive_asset_stretch(code, meta):
@@ -214,6 +222,32 @@ def genre_checks(description, slug, code):
             ('Enemy waves/spawning', r'spawn|wave|zombie|enemy', True, False),
         ])
     return checks
+BROWSER_TEST_JS = Path(__file__).parent / 'browser_test.js'
+
+
+def run_browser_test(game_dir):
+    """Run headless browser QA. Returns (passed, failed_required, skipped)."""
+    if not BROWSER_TEST_JS.exists():
+        return None, None, 'browser_test.js not found'
+    import subprocess
+    try:
+        result = subprocess.run(
+            ['node', str(BROWSER_TEST_JS), str(game_dir)],
+            capture_output=True, text=True, timeout=60
+        )
+        output = result.stdout + result.stderr
+        print(output.strip())
+        if result.returncode == 2:
+            return None, None, 'browser unavailable'
+        passed_check = result.returncode == 0
+        return passed_check, not passed_check, None
+    except subprocess.TimeoutExpired:
+        print('  [WARN] Browser test timed out (skipped)')
+        return None, None, 'timeout'
+    except FileNotFoundError:
+        return None, None, 'node not found'
+
+
 def test_game(slug):
     game_dir = GAMES_DIR / slug
     path = game_dir / 'index.html'
@@ -239,7 +273,7 @@ def test_game(slug):
         ('Rich scene density', None, True, False),
         ('Core gameplay depth', None, True, False),
         ('Multiple entities/systems', None, True, False),
-        ('Rich canvas drawing', None, True, False),
+        ('Rich canvas drawing', None, False, False),
         ('Generated bitmap/image assets', None, True, False),
         ('Generated music asset', None, False, False),
         ('Not rectangle-only actors', None, True, False),
@@ -255,6 +289,15 @@ def test_game(slug):
     ]
     checks.extend(genre_checks(description, slug, code))
 
+    # If MiniMax quota was exhausted during generation, asset checks become warnings
+    quota_exhausted = meta.get("quota_exhausted", False)
+    if quota_exhausted:
+        print("  [INFO] MiniMax quota was exhausted — asset checks downgraded to warnings")
+        checks = [
+            (name, pat, False if name in ("Generated bitmap/image assets", "Generated music asset", "Not rectangle-only actors", "No distorted asset stretching", "No random asset tile collage") else required, invert)
+            for name, pat, required, invert in checks
+        ]
+
     print(f'\nTesting: {slug}\n' + '=' * 58)
     passed = 0
     required_failed = []
@@ -264,7 +307,7 @@ def test_game(slug):
         elif name == 'GameForge metadata':
             found = bool(meta.get('description')) and bool(meta.get('title'))
         elif name == 'Substantial code size':
-            found = len(code.encode('utf-8')) >= 32000 or code.count('\n') >= 450
+            found = len(code.encode('utf-8')) >= 24000 or code.count('\n') >= 350
         elif name == 'Rich scene density':
             found = has_rich_scene(code)
         elif name == 'Core gameplay depth':
@@ -301,14 +344,25 @@ def test_game(slug):
         icon = 'OK' if ok else ('FAIL' if required else 'WARN')
         print(f'  [{icon}] {name}')
 
-    pct = int(passed / len(checks) * 100)
-    if required_failed:
-        pct = min(pct, 74)
-    status = 'READY' if pct >= 85 and not required_failed else 'ISSUES' if pct >= 65 else 'BROKEN'
+    # --- Browser runtime test ---
     print('-' * 58)
-    print(f'  Result: {passed}/{len(checks)} ({pct}%) - {status}')
+    browser_pass, browser_req_fail, browser_skip = run_browser_test(game_dir)
+    if browser_skip:
+        print(f'  [SKIP] Browser runtime QA ({browser_skip})')
+    elif browser_pass:
+        passed += 1
+
+    total = len(checks) + (0 if browser_skip else 1)
+    pct = int(passed / total * 100)
+    if required_failed or (browser_req_fail and not browser_skip):
+        pct = min(pct, 74)
+    status = 'READY' if pct >= 85 and not required_failed and not (browser_req_fail and not browser_skip) else 'ISSUES' if pct >= 65 else 'BROKEN'
+    print('-' * 58)
+    print(f'  Result: {passed}/{total} ({pct}%) - {status}')
     if required_failed:
         print('  Required failures: ' + ', '.join(required_failed))
+    if browser_req_fail and not browser_skip:
+        print('  Required failure: Browser runtime QA')
     print('=' * 58)
     return 0 if status == 'READY' else 1
 

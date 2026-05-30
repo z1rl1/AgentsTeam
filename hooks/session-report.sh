@@ -15,6 +15,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE_ROOT="$(dirname "$SCRIPT_DIR")"
 source "$SCRIPT_DIR/lib/utils.sh"
 source "$SCRIPT_DIR/lib/metrics.sh"
 
@@ -135,6 +136,18 @@ REPORT_FILE="$LOGS_DIR/session-report-${TODAY}-${SESSION_ID:0:8}.md"
   fi
 
 } > "$REPORT_FILE"
+
+
+# Observability: append today's LLM usage stats to session report
+STATS_SCRIPT="$WORKSPACE_ROOT/skills/observability/scripts/stats.py"
+if [[ -f "$STATS_SCRIPT" ]]; then
+  {
+    echo ""
+    echo "## LLM Usage (Today)"
+    echo ""
+    python3 "$STATS_SCRIPT" today 2>/dev/null || true
+  } >> "$REPORT_FILE"
+fi
 
 # Return summary to Claude
 jq -n \

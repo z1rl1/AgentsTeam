@@ -1,0 +1,19 @@
+{
+  "description": "платформер в стиле 90х: главный герой ходит по городу, прыгает, бегает и бьет бандитов ударами; нужен красивый большой экранный геймплей, не маленькая заготовка",
+  "title": "Улицы 90х",
+  "theme": "retro",
+  "user_id": "codex-test\r",
+  "created_at": 1779475364,
+  "quality_threshold": 85,
+  "qa_score": 74,
+  "fixed_at": "2026-05-29T20:08:33.035398Z",
+  "fix_kept": false,
+  "fix_history": [
+    {
+      "fixed_at": "2026-05-29T20:08:33.035398Z",
+      "score_before": 74,
+      "score_after": 74,
+      "kept": false
+    }
+  ]
+}

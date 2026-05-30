@@ -1,0 +1,37 @@
+{
+  "description": "Pixel arcade tank battle game. Top-down view. Player controls GREEN tank: WASD movement, mouse or arrow keys for aiming, spacebar to shoot. Enemies: light tank (fast, 1 hit point), medium tank (slow, 3 hit points, shoots back), heavy tank (very slow, 5 hit points, powerful shot). Map: destructible brick walls, indestructible metal blocks, bushes for hiding (enemies shoot through). Powerups on map: star (rapid fire), helmet (shield 5 sec), bomb (explodes all enemies on screen). Enemy waves increase in difficulty. On enemy destruction: animated pixel explosion. All drawn with pixel blocks via canvas: tanks 32x32, walls 16x16, animated explosions. Colors: green player, grey enemies, brown walls, yellow explosions. HUD: lives top left, score center, wave number top right. Music from menu. Pause with ESC key shows 'Back to Menu' button. Russian UI. Full responsive.",
+  "title": "Pixel Tank Battle",
+  "theme": "retro",
+  "user_id": "316330404",
+  "created_at": 1780100979,
+  "quality_threshold": 85,
+  "assets": {
+    "enabled": true,
+    "required": true,
+    "images": [
+      {
+        "type": "image",
+        "path": "assets/background.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/sprites.png",
+        "source": "minimax-base64"
+      },
+      {
+        "type": "image",
+        "path": "assets/title.png",
+        "source": "minimax-base64"
+      }
+    ],
+    "audio": [
+      {
+        "type": "music",
+        "path": "assets/theme.mp3",
+        "source": "minimax-hex"
+      }
+    ],
+    "errors": []
+  }
+}
