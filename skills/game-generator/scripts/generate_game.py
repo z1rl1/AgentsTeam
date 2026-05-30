@@ -57,7 +57,7 @@ load_env_file(WORKSPACE_ROOT / ".env")
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 MINIMAX_API_KEY = os.environ.get("MINIMAX_API_KEY", "")
 MODEL = os.environ.get("GAMEFORGE_MODEL", "MiniMax-M2.7")
-MAX_TOKENS = int(os.environ.get("GAMEFORGE_MAX_TOKENS", "200000"))
+MAX_TOKENS = int(os.environ.get("GAMEFORGE_MAX_TOKENS", "180000"))
 QUALITY_THRESHOLD = int(os.environ.get("GAMEFORGE_QUALITY_THRESHOLD", "85"))
 SELF_IMPROVE_THRESHOLD = int(os.environ.get("GAMEFORGE_SELF_IMPROVE_THRESHOLD", "88"))
 MAX_ATTEMPTS = int(os.environ.get("GAMEFORGE_MAX_ATTEMPTS", "2"))
@@ -252,6 +252,50 @@ Art direction and layout rules:
 
 Visual direction:
 Use the theme colors, but avoid empty black space. The first screen must look like a real finished web game with a large playable area, rich scenery, readable HUD, and polished objects.
+
+Design quality rules (from GameForge Design Contract):
+
+TEXT AND CONTRAST:
+- Text must be readable during gameplay, not just present. Use size >= 16px for HUD, >= 24px for titles.
+- HUD text, health, score, and prompts need strong contrast against moving/noisy backgrounds.
+- Never place raw text directly on noisy generated key art. Always use: translucent panel behind text, dark scrim, text shadow (ctx.shadowBlur + shadowColor), or text stroke.
+- Use system-ui, Arial, or sans-serif. Never monospace/pixel fonts for the whole UI.
+- Every fillText call must have ctx.textAlign and ctx.textBaseline set.
+
+RENDERING LAYERS (strict order, never mix):
+1. Background (background.png with parallax or gradient sky)
+2. Midground / parallax details (clouds, buildings, stars at different speeds)
+3. Gameplay objects (player, enemies, bullets, pickups)
+4. Particle effects (explosions, sparks, trails)
+5. HUD overlay (health bar, score, lives, wave counter)
+6. Modal / menu (pause screen, game over, title screen)
+Never draw HUD elements between gameplay objects or behind backgrounds.
+
+GAME FEEL — synchronized feedback bundles (required for hits, deaths, pickups):
+- Hit on player: screen shake (canvas translate +/-3px for 200ms) + flash overlay (rgba white 0.3 alpha) + sound
+- Enemy destroyed: explosion particles (15+ arc() with fade) + score popup text + sound
+- Pickup collected: glow ring (expanding arc() with decreasing opacity) + sound
+- Level up / wave clear: brief slowdown effect + large centered text with fade
+Do NOT add constant noise. Feedback must be event-triggered and short (200-400ms).
+
+VISUAL HIERARCHY — gameplay importance:
+- Health/lives: top-left, always visible, icon-based or bar-based
+- Score: top-center, large but not overlapping
+- Wave/level: top-right
+- Objective/controls hint: bottom, smaller, fades after 5 seconds
+- No element should visually compete equally with another. Size = importance.
+
+ASSET COMPOSITION — generated images are raw material, not final art:
+- background.png: use as layered scenery with parallax, add lighting/tint, not just stretched behind everything
+- title.png: use on start screen with composition (centered, with overlay for text)
+- player-idle/run/jump: draw full image scaled to character size, no distortion
+- Never paste assets as random square tiles. Use semantic positioning.
+
+WHAT GOOD LOOKS LIKE — ask yourself before finishing:
+- Does the first screen look like a finished game, not a prototype canvas?
+- Is text readable against the background at both desktop and mobile sizes?
+- Do actors look like intentional sprites, not colored rectangles?
+- Would a human want to play this for several minutes?
 
 Return ONLY HTML. No Markdown. No explanation. Do not include reasoning or analysis.
 """
