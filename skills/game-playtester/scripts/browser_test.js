@@ -136,6 +136,25 @@ async function runTest(dir) {
     // A static start screen with a live rAF loop is still a live game.
     const loopAlive = rafCount >= 10 || canvasChanges;
 
+    // Restart test: trigger game over via wall collision, then restart
+    const jsErrorsBefore = jsErrors.length;
+    await fireKey(page, 'ArrowLeft', 'ArrowLeft');
+    await page.waitForTimeout(100);
+    await fireKey(page, 'ArrowDown', 'ArrowDown');
+    await page.waitForTimeout(100);
+    await fireKey(page, 'ArrowRight', 'ArrowRight');
+    await page.waitForTimeout(100);
+    await fireKey(page, 'ArrowUp', 'ArrowUp');
+    await page.waitForTimeout(2000); // wait for possible game over
+    await fireKey(page, 'Enter', 'Enter'); // restart
+    await page.waitForTimeout(200);
+    await fireKey(page, 'Space', ' ');
+    await page.waitForTimeout(800);
+    const checksumAfterRestart = await page.evaluate(CANVAS_CHECKSUM);
+    const rafAfterRestart = await page.evaluate(() => window.__rafCount || 0);
+    const noNewJsErrors = jsErrors.length === jsErrorsBefore;
+    const restartWorking = noNewJsErrors && rafAfterRestart > rafCount && checksumAfterRestart !== null && checksumAfterRestart !== 0;
+
     const checks = [
       ['No uncaught JS errors', jsErrors.length === 0, true],
       ['Canvas exists with valid size', canvasOk, true],
@@ -143,6 +162,7 @@ async function runTest(dir) {
       ['Game loop is alive (rAF or canvas changes)', loopAlive, true],
       ['Page stays alive (not frozen)', pageAlive, true],
       ['Canvas changes after game starts', canvasChanges, false],
+      ['Restart works without errors', restartWorking, false],
       ['No console errors', consoleErrors.length === 0, false],
     ];
 

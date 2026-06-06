@@ -182,6 +182,45 @@ function drawBackground() {{
 }}
 ```
 
+RESTART / RESET — CRITICAL (most common LLM bug):
+startGame() or resetGame() MUST reset ALL of these or restart will be broken:
+
+```javascript
+function startGame() {{
+  // --- ALWAYS reset these ---
+  accumulator = 0;                          // fixed timestep accumulator
+  lastTime = performance.now() / 1000;      // prevent huge first dt
+  activeTimeouts.forEach(t => clearTimeout(t));  // speed boosts, timed effects
+  activeTimeouts = [];
+  activeIntervals.forEach(i => clearInterval(i));
+  activeIntervals = [];
+  particles.length = 0;                     // clear particle arrays
+  bullets.length = 0;                       // or projectiles/shots
+  enemies.length = 0;                       // all entity arrays
+  pickups.length = 0;
+  score = 0;
+  lives = 3;                                // or whatever initial value
+  wave = 1;
+  // --- then init game state ---
+  spawnInitialEnemies();
+  spawnFood();
+  // etc.
+}}
+```
+
+Declare at top of script:
+```javascript
+let activeTimeouts = [];
+let activeIntervals = [];
+```
+
+Wrap ALL setTimeout/setInterval that relate to game state:
+```javascript
+activeTimeouts.push(setTimeout(() => {{ snake.speed = baseSpeed; }}, 3000));
+```
+
+FAILURE TO DO THIS causes: instant death on restart, wrong speed, ghost particles, broken score.
+
 МУЗЫКА С САМОГО СТАРТА (обязательно):
 - Audio объект создаётся сразу при загрузке страницы
 - Начинает играть на главном экране, не после старта игры
